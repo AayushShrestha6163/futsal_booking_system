@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:futal_booking_system/screen/splash_screen.dart';
+import 'package:futal_booking_system/theme/theme_data.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -8,7 +9,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.green),
+      theme: getApplicationTheme(), 
       home: const SplashScreen(),
     );
   }
