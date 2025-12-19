@@ -105,7 +105,7 @@ class OnbordingScreen3 extends StatelessWidget {
                   Flexible(
                     child: MyButton(
                       onPressed: () => _goToNext(context),
-                      text: '->',
+                      text: 'Next',
                     ),
                   ),
                 ],
