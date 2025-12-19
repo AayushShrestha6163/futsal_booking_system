@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              
               Row(
                 children: [
                   const CircleAvatar(
@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Location
+            
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // Banner
+              
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -117,7 +117,6 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Menu Grid
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
