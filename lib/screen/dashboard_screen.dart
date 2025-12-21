@@ -1,67 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:futal_booking_system/screen/login_screen.dart';
+import 'package:futal_booking_system/screen/bottomScreen/booking_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+import 'package:futal_booking_system/screen/bottomScreen/home_screen.dart';
+import 'package:futal_booking_system/screen/bottomScreen/profile_screen.dart';
+import 'package:futal_booking_system/screen/bottomScreen/setting_screen.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
-  void _logout(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return const LoginScreen();
-        },
-      ),
-    );
-  }
+  @override
+  State<DashboardScreen> createState() => _BottomNavigationScreenState();
+}
+
+class _BottomNavigationScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const BookScreen(),
+    const ProfileScreen(),
+    const SettingScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Khel Maidan"),
-        backgroundColor: Colors.green,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    "Welcome to",
-                    style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Khel Maidan",
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 4,
-                          color: Colors.black26,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+      
+      body: _screens[_selectedIndex],
 
-          
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: "Settings",
+          ),
         ],
+        backgroundColor: Color.fromARGB(255, 46, 226, 61),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.black,
       ),
     );
   }

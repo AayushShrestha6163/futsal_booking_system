@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return "Email cannot be empty";
     }
     if (!val.contains("@") || !val.contains(".com")) {
-      return "Enter a valid email";
+      return "Enter a valid email must be @gmail.com";
     }
     return null;
   }
@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                "Welcome Back!",
+                "",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 40),
@@ -104,7 +104,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        
                         const Text(
                           "Email Address :",
                           style: TextStyle(fontSize: 14),
@@ -120,7 +119,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 20),
 
-                        
                         const Text(
                           "Password :",
                           style: TextStyle(fontSize: 14),
@@ -151,7 +149,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 16),
 
-                        
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -170,9 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             TextButton(
-                              onPressed: () {
-                                
-                              },
+                              onPressed: () {},
                               child: const Text(
                                 "Forget Password?",
                                 style: TextStyle(
@@ -186,7 +181,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 24),
 
-                        
                         Center(
                           child: SizedBox(
                             width: 220,
@@ -200,7 +194,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 24),
 
-                        
                         Center(
                           child: GestureDetector(
                             onTap: goToSignUp,
@@ -208,6 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               "Create New Account",
                               style: TextStyle(
                                 fontSize: 14,
+                                color: Colors.lightBlue,
                                 decoration: TextDecoration.underline,
                               ),
                             ),

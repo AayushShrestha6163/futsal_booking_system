@@ -32,14 +32,13 @@ class Onboarding1 extends StatelessWidget {
             children: [
               const Spacer(flex: 1),
 
-           
               Expanded(
                 flex: 3,
                 child: Center(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return Image.asset(
-                        'assets/images/onbording.png', 
+                        'assets/images/onbording.png',
                         width: constraints.maxWidth * 0.8,
                         fit: BoxFit.contain,
                       );
@@ -50,7 +49,6 @@ class Onboarding1 extends StatelessWidget {
 
               const Spacer(flex: 1),
 
-             
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -69,7 +67,6 @@ class Onboarding1 extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -88,10 +85,8 @@ class Onboarding1 extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              
               const Spacer(flex: 2),
 
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -111,7 +106,7 @@ class Onboarding1 extends StatelessWidget {
                   Flexible(
                     child: MyButton(
                       onPressed: () => _goToNext(context),
-                      text: '->',
+                      text: 'Next',
                     ),
                   ),
                 ],
@@ -122,6 +117,4 @@ class Onboarding1 extends StatelessWidget {
       ),
     );
   }
-
-  
 }
