@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:futal_booking_system/app.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:futal_booking_system/app/app.dart';
+import 'package:futal_booking_system/core/services/hive/hive_service.dart';
+import 'package:futal_booking_system/core/services/storage/user_session_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+Future<void> main() async {
 
-void main() {
-  runApp(const App());
+  WidgetsFlutterBinding.ensureInitialized();
+
+ 
+  final hiveService = HiveService();
+  await hiveService.init();
+
+  final sharedPreferences = await SharedPreferences.getInstance();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      ],
+      child: const App(),
+    ),
+  );
 }
