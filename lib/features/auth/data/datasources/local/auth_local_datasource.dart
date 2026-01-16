@@ -14,7 +14,7 @@ final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
   );
 });
 
-class AuthLocalDatasource implements IAuthDataSource {
+class AuthLocalDatasource implements IAuthLocalDataSource {
   final HiveService _hiveService;
   final UserSessionService _userSessionService;
 
@@ -58,7 +58,7 @@ class AuthLocalDatasource implements IAuthDataSource {
   }
 
   @override
-  Future<AuthHiveModel?> getCurrentUser() async {
+  Future<AuthHiveModel?> getCurrentUser(userId) async {
     try {
       // Check if user is logged in
       if (!_userSessionService.isLoggedIn()) {
