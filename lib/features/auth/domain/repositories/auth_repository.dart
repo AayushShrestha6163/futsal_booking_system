@@ -6,6 +6,6 @@ import 'package:futal_booking_system/features/auth/domain/entities/auth_entity.d
 abstract interface class IAuthRepository {
   Future<Either<Failure, bool>> register(AuthEntity user);
   Future<Either<Failure, AuthEntity>> login(String email, String password);
-  Future<Either<Failure, AuthEntity>> getCurrentUser();
+  Future<Either<Failure, AuthEntity>> getCurrentUser(String userId);
   Future<Either<Failure, bool>> logout();
 }
