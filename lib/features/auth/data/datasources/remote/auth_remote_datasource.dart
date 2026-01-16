@@ -4,7 +4,7 @@ import 'package:futal_booking_system/core/api/api_endpoints.dart';
 import 'package:futal_booking_system/core/services/storage/user_session_service.dart';
 import 'package:futal_booking_system/features/auth/data/datasources/auth_datasource.dart';
 import 'package:futal_booking_system/features/auth/data/models/auth_api_model.dart';
-import 'package:futal_booking_system/features/auth/data/models/auth_hive_model.dart';
+
 
 
 
