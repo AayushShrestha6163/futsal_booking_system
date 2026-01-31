@@ -19,7 +19,7 @@ class UserSessionService {
   static const String _keyIsLoggedIn = 'is_logged_in';
   static const String _keyUserId = 'user_id';
   static const String _keyUserEmail = 'user_email';
-  
+
   static const String _keyUserUsername = 'user_username';
   static const String _keyUserPhoneNumber = 'user_phone_number';
   static const String _keyUserBatchId = 'user_batch_id';
@@ -29,19 +29,25 @@ class UserSessionService {
 
   // Save user session after login
   Future<void> saveUserSession({
-    required String userId,
-    required String email,
-    
-    required String username,
+    String? userId,
+    String? email,
+
+    String? username,
     String? phoneNumber,
     String? batchId,
     String? profilePicture,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
-    await _prefs.setString(_keyUserId, userId);
-    await _prefs.setString(_keyUserEmail, email);
-    
-    await _prefs.setString(_keyUserUsername, username);
+    if (userId != null) {
+      await _prefs.setString(_keyUserId, userId);
+    }
+    if (email != null) {
+      await _prefs.setString(_keyUserEmail, email);
+    }
+
+    if (username != null) {
+      await _prefs.setString(_keyUserUsername, username);
+    }
     if (phoneNumber != null) {
       await _prefs.setString(_keyUserPhoneNumber, phoneNumber);
     }
@@ -68,8 +74,6 @@ class UserSessionService {
     return _prefs.getString(_keyUserEmail);
   }
 
-  
-
   // Get current user username
   String? getCurrentUserUsername() {
     return _prefs.getString(_keyUserUsername);
@@ -95,7 +99,7 @@ class UserSessionService {
     await _prefs.remove(_keyIsLoggedIn);
     await _prefs.remove(_keyUserId);
     await _prefs.remove(_keyUserEmail);
-   
+
     await _prefs.remove(_keyUserUsername);
     await _prefs.remove(_keyUserPhoneNumber);
     await _prefs.remove(_keyUserBatchId);
