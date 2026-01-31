@@ -2,7 +2,7 @@ import 'package:futal_booking_system/features/auth/domain/entities/auth_entity.d
 
 class AuthApiModel {
   final String? id;
- 
+
   final String email;
   final String? password;
   final String firstName;
@@ -11,15 +11,15 @@ class AuthApiModel {
 
   AuthApiModel({
     this.id,
-    
+
     required this.email,
     this.password,
     required this.firstName,
-     required this.lastName,
+    required this.lastName,
     this.role = 'user',
   }) {
     // Validation
-   
+
     if (email.isEmpty || !_isValidEmail(email)) {
       throw ArgumentError('Email must be a valid email address');
     }
@@ -41,7 +41,7 @@ class AuthApiModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      
+
       'email': email,
       'password': password,
       'firstName': firstName,
@@ -53,8 +53,7 @@ class AuthApiModel {
   // Create from JSON
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
     return AuthApiModel(
-      id: json['id'] as String?,
-     
+      id: json['_id'] as String?,
       email: json['email'] as String,
       password: json['password'] as String,
       firstName: json['firstName'] as String,
@@ -68,7 +67,6 @@ class AuthApiModel {
       email: email,
       firstName: firstName,
       lastName: lastName,
-     
     );
   }
 
@@ -78,9 +76,6 @@ class AuthApiModel {
       firstName: entity.firstName,
       lastName: entity.lastName,
       password: entity.password,
-     
     );
   }
-
-  
 }
