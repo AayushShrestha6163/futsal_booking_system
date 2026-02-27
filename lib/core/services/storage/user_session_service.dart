@@ -35,7 +35,8 @@ class UserSessionService {
     String? username,
     String? phoneNumber,
     String? batchId,
-    String? profilePicture,
+    String? profilePicture, 
+    String? role,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
     if (userId != null) {
