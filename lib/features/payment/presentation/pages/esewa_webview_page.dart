@@ -29,40 +29,51 @@ class _EsewaWebviewPageState extends State<EsewaWebviewPage> {
   @override
   void initState() {
     super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    // ✅ Clear cookies (fixes many captcha/session issues)
+    final cookieManager = WebViewCookieManager();
+    await cookieManager.clearCookies();
 
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) setState(() => loading = true);
+          },
           onPageFinished: (_) {
             if (mounted) setState(() => loading = false);
           },
           onNavigationRequest: (req) {
-  final url = req.url;
+            final url = req.url;
 
-  // ✅ 1) Close when backend callback is hit
-  if (url.startsWith(widget.successUrlPrefix)) {
-    Navigator.pop(context, true);
-    return NavigationDecision.prevent;
-  }
-  if (url.startsWith(widget.failureUrlPrefix)) {
-    Navigator.pop(context, false);
-    return NavigationDecision.prevent;
-  }
+            // ✅ 1) Close when backend callback is hit
+            if (url.startsWith(widget.successUrlPrefix)) {
+              Navigator.pop(context, true);
+              return NavigationDecision.prevent;
+            }
+            if (url.startsWith(widget.failureUrlPrefix)) {
+              Navigator.pop(context, false);
+              return NavigationDecision.prevent;
+            }
 
-  // ✅ 2) ALSO close if backend redirects to web dashboard
-  // (because your backend redirects to WEB_BASE_URL/dashboard)
-  if (url.contains("/dashboard") && url.contains("success=")) {
-    Navigator.pop(context, true);
-    return NavigationDecision.prevent;
-  }
-  if (url.contains("/dashboard") && (url.contains("error=") || url.contains("fail"))) {
-    Navigator.pop(context, false);
-    return NavigationDecision.prevent;
-  }
+            // ✅ 2) ALSO close if backend redirects to web dashboard
+            // (because backend may redirect to WEB_BASE_URL/dashboard)
+            if (url.contains("/dashboard") && url.contains("success=")) {
+              Navigator.pop(context, true);
+              return NavigationDecision.prevent;
+            }
+            if (url.contains("/dashboard") &&
+                (url.contains("error=") || url.contains("fail"))) {
+              Navigator.pop(context, false);
+              return NavigationDecision.prevent;
+            }
 
-  return NavigationDecision.navigate;
-},
+            return NavigationDecision.navigate;
+          },
         ),
       );
 
@@ -74,7 +85,7 @@ class _EsewaWebviewPageState extends State<EsewaWebviewPage> {
       final k = e.key;
       final v = (e.value ?? "").toString();
 
-      // ✅ FIX: correct html escaping in Dart
+      // ✅ correct html escaping
       final safeV = const HtmlEscape().convert(v);
 
       return "<input type='hidden' name='$k' value='$safeV' />";
@@ -83,6 +94,9 @@ class _EsewaWebviewPageState extends State<EsewaWebviewPage> {
     final html = """
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  </head>
   <body onload="document.forms[0].submit()">
     <form method="POST" action="${widget.formUrl}">
       $inputs
@@ -97,7 +111,17 @@ class _EsewaWebviewPageState extends State<EsewaWebviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Pay with eSewa")),
+      appBar: AppBar(
+        title: const Text("Pay with eSewa"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              controller.reload();
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           WebViewWidget(controller: controller),

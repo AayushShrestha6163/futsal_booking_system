@@ -4,8 +4,7 @@ import 'package:futal_booking_system/core/api/api_client.dart';
 import 'package:futal_booking_system/features/bookings/data/datsources/remote/booking_remote_datsource.dart';
 import 'package:futal_booking_system/features/payment/data/datasources/remote/payment_remote_datasouces.dart';
 
-
-// --- datasources (use same ApiClient pattern like courts/slots) ---
+// --- datasources ---
 final bookingRemoteDataSourceProvider = Provider<BookingRemoteDataSource>((ref) {
   final api = ref.read(apiClientProvider);
   return BookingRemoteDataSource(api);
@@ -97,6 +96,45 @@ class BookingPaymentNotifier extends StateNotifier<BookingPaymentState> {
       return null;
     }
   }
+
+  // ✅ NEW: mark booking payment status in backend
+  Future<bool> markBookingPaid({
+  required String bookingId,
+  required bool ok,
+  String? transactionCode,
+}) async {
+  try {
+    state = state.copyWith(loading: true, error: null);
+
+    final api = ref.read(apiClientProvider);
+
+    final response = await api.patch(
+      "/api/bookings/$bookingId/pay",
+      data: {
+        "ok": ok,
+        if (transactionCode != null && transactionCode.isNotEmpty)
+          "transactionCode": transactionCode,
+      },
+    );
+
+    // ✅ Dio Response -> JSON is in response.data
+    final data = response.data;
+
+    if (data is Map && data["success"] == true) {
+      state = state.copyWith(loading: false);
+      return true;
+    }
+
+    if (data is Map) {
+      throw Exception(data["message"]?.toString() ?? "Payment update failed");
+    }
+
+    throw Exception("Invalid response from server");
+  } catch (e) {
+    state = state.copyWith(loading: false, error: e.toString());
+    return false;
+  }
+}
 
   void clearError() {
     state = state.copyWith(error: null);
