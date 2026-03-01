@@ -16,4 +16,23 @@ class ApiEndpoints {
   static const String userRegister = '/api/auth/register';
   static const String updateProfile = '/api/auth/update';
   static const String getUser = '/api/auth/users';
+
+
+  // ============ Courts ============
+  static const String courts = '/api/courts'; // GET all
+  static String courtById(String id) => '/api/courts/$id';
+
+  // ============ Slots ============
+  static String courtSlots(String courtId) => '/api/courts/$courtId/slots';
+
+   // ============ Bookings ============
+  static const String bookings = '/api/bookings';        // POST create
+  static const String myBookings = '/api/bookings/me';   // GET my bookings
+  static String cancelBooking(String id) => '/api/bookings/$id'; // DELETE
+
+  // ============ Payments (eSewa) ============
+  static const String initiateEsewa = '/api/payments/esewa/initiate';
+  // success/failure are for browser redirect, Flutter doesn't call them directly
+
+  
 }

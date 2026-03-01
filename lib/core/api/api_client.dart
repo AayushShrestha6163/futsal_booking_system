@@ -2,21 +2,19 @@ import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:futal_booking_system/core/api/api_endpoints.dart';
+import 'package:futal_booking_system/core/services/storage/token_service.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-
-
 
 // Provider for ApiClient
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
+  return ApiClient(ref);
 });
 
 class ApiClient {
   late final Dio _dio;
 
-  ApiClient() {
+  ApiClient(Ref ref) {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
@@ -29,10 +27,10 @@ class ApiClient {
       ),
     );
 
-    // Add interceptors
-    _dio.interceptors.add(_AuthInterceptor());
+    // ✅ Add auth interceptor (adds Bearer token automatically)
+    _dio.interceptors.add(_AuthInterceptor(ref));
 
-    // Auto retry on network failures
+    // ✅ Auto retry on network failures
     _dio.interceptors.add(
       RetryInterceptor(
         dio: _dio,
@@ -43,7 +41,7 @@ class ApiClient {
           Duration(seconds: 3),
         ],
         retryEvaluator: (error, attempt) {
-          // Retry on connection errors and timeouts, not on 4xx/5xx
+          // Retry only on connection errors and timeouts
           return error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.sendTimeout ||
               error.type == DioExceptionType.receiveTimeout ||
@@ -52,7 +50,7 @@ class ApiClient {
       ),
     );
 
-    // Only add logger in debug mode
+    // ✅ Only add logger in debug mode
     if (kDebugMode) {
       _dio.interceptors.add(
         PrettyDioLogger(
@@ -107,6 +105,7 @@ class ApiClient {
       options: options,
     );
   }
+
   // PATCH request
   Future<Response> patch(
     String path, {
@@ -153,18 +152,28 @@ class ApiClient {
   }
 }
 
-// Auth Interceptor to add JWT token to requests
+// ✅ Auth Interceptor to add JWT token to requests
 class _AuthInterceptor extends Interceptor {
-  final _storage = const FlutterSecureStorage();
-  static const String _tokenKey = 'auth_token';
+  _AuthInterceptor(this.ref);
+  final Ref ref;
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 Unauthorized - token expired
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    final tokenService = ref.read(tokenServiceProvider);
+    final token = await tokenService.getToken();
+
+    if (token != null && token.isNotEmpty) {
+      options.headers["Authorization"] = "Bearer $token";
+    }
+
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      // Clear token and redirect to login
-      _storage.delete(key: _tokenKey);
-      // You can add navigation logic here or use a callback
+      final tokenService = ref.read(tokenServiceProvider);
+      await tokenService.removeToken();
     }
     handler.next(err);
   }
