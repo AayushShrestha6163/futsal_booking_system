@@ -29,10 +29,24 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
        _tokenSessionService = tokenSessionService;
 
   @override
-  Future<AuthApiModel?> getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
+Future<AuthApiModel?> getCurrentUser() async {
+  final response = await _apiClient.get(ApiEndpoints.currentUser);
+
+  if (response.data['success'] == true) {
+    final data = response.data['data'] as Map<String, dynamic>;
+    final user = AuthApiModel.fromJson(data);
+
+    // refresh local session (optional but good)
+    await _userSessionService.saveUserSession(
+      userId: user.id,
+      email: user.email,
+    );
+
+    return user;
   }
+
+  return null;
+}
 
   @override
   Future<bool> logout() {

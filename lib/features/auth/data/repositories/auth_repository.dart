@@ -1,4 +1,3 @@
-
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,12 +11,12 @@ import 'package:futal_booking_system/features/auth/data/models/auth_hive_model.d
 import 'package:futal_booking_system/features/auth/domain/entities/auth_entity.dart';
 import 'package:futal_booking_system/features/auth/domain/repositories/auth_repository.dart';
 
-//provider
-
+// provider
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   final authDataSource = ref.read(authLocalDatasourceProvider);
   final authRemoteDataSource = ref.read(authRemoteDatasourceProvider);
   final networkInfo = ref.read(networkInfoProvider);
+
   return AuthRepository(
     authLocalDatasource: authDataSource,
     authRemoteDatasource: authRemoteDataSource,
@@ -37,25 +36,56 @@ class AuthRepository implements IAuthRepository {
   }) : _authDatasource = authLocalDatasource,
        _authRemoteDatasource = authRemoteDatasource,
        _networkInfo = networkInfo;
+
+  // ✅ Local DB: get user by id (offline use)
   @override
-  Future<Either<Failure, AuthEntity>> getCurrentUser(String userId) async {
+  Future<Either<Failure, AuthEntity>> getUserById(String userId) async {
     try {
       final user = await _authDatasource.getCurrentUser(userId);
       if (user != null) {
-        final AuthEntity = user.toEntity();
-        return Future.value(Right(AuthEntity));
+        final entity = user.toEntity(); // ✅ fixed variable name
+        return Right(entity);
       }
       return Left(LocalDatabaseFailure(message: 'User not found'));
     } catch (e) {
-      return Future.value(Left(LocalDatabaseFailure(message: e.toString())));
+      return Left(LocalDatabaseFailure(message: e.toString()));
+    }
+  }
+
+  // ✅ Remote: get current user using saved token (for fingerprint login)
+  @override
+  Future<Either<Failure, AuthEntity>> getCurrentUser() async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel = await _authRemoteDatasource.getCurrentUser();
+
+        if (apiModel != null) {
+          final entity = apiModel.toEntity();
+          return Right(entity);
+        }
+
+        return const Left(
+          ApiFailure(message: "Session expired. Please login again."),
+        );
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? 'Failed to get current user',
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(
+        ApiFailure(message: "No internet. Please connect and try again."),
+      );
     }
   }
 
   @override
-  Future<Either<Failure, AuthEntity>> login(
-    String email,
-    String password,
-  ) async {
+  Future<Either<Failure, AuthEntity>> login(String email, String password) async {
     if (await _networkInfo.isConnected) {
       try {
         final apiModel = await _authRemoteDatasource.login(email, password);

@@ -16,6 +16,7 @@ class ApiEndpoints {
   static const String userRegister = '/api/auth/register';
   static const String updateProfile = '/api/auth/update';
   static const String getUser = '/api/auth/users';
+  static const String currentUser = '/api/auth/me';
 
 
   // ============ Courts ============

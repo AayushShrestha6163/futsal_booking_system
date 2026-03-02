@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/pages/bottomScreen/gyroscope_screen.dart';
 import 'bottomScreen/booking_screen.dart';
 
 import 'bottomScreen/home_screen.dart';
@@ -20,6 +21,7 @@ class _BottomNavigationScreenState extends State<DashboardScreen> {
     const BookScreen(),
     const ProfileScreen(),
     const MyBookingsScreen(),
+    const GyroscopeScreen(),
   ];
 
   @override
@@ -40,6 +42,7 @@ class _BottomNavigationScreenState extends State<DashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           BottomNavigationBarItem(icon: Icon(Icons.book), label: "mybookings"),
+          BottomNavigationBarItem(icon: Icon(Icons.screen_rotation), label: "Gyro"), 
         ],
         backgroundColor: Color.fromARGB(255, 46, 226, 61),
         selectedItemColor: Colors.white,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/app/routes/app_routes.dart';
+import 'package:futal_booking_system/core/services/biometrics/biomertic_service.dart';
 import 'package:futal_booking_system/core/utils/snackbar_utils.dart';
 import 'package:futal_booking_system/features/auth/presentation/state/auth_state.dart';
 import 'package:futal_booking_system/features/auth/presentation/view_models/auth_viewmodel.dart';
@@ -38,22 +39,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  void goToDashboard() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    );
-  }
-
   Future<void> _handleLogin() async {
     if (formKey.currentState!.validate()) {
-      await ref
-          .read(authViewModelProvider.notifier)
-          .login(
+      await ref.read(authViewModelProvider.notifier).login(
             email: emailController.text.trim(),
             password: passwordController.text,
           );
     }
+  }
+
+  // ✅ Fingerprint Login
+  Future<void> _handleFingerprintLogin() async {
+    final bio = BiometricService();
+
+    final available = await bio.isAvailable();
+    if (!available) {
+      SnackbarUtils.showError(context, "Fingerprint not available on this device.");
+      return;
+    }
+
+    final ok = await bio.authenticateForLogin();
+    if (!ok) return;
+
+    // ✅ validate token by calling /api/auth/me via viewmodel
+    await ref.read(authViewModelProvider.notifier).fingerprintLogin();
   }
 
   String? validateEmail(String? val) {
@@ -82,6 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
     });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -91,7 +101,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const SizedBox(height: 40),
 
-              // TOP TEXTS
               const Text(
                 "Hello",
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
@@ -192,6 +201,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                         const SizedBox(height: 24),
 
+                        // ✅ Normal login
                         Center(
                           child: SizedBox(
                             width: 220,
@@ -199,6 +209,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: MyButton(
                               onPressed: _handleLogin,
                               text: "Login Account",
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // ✅ Fingerprint login button
+                        Center(
+                          child: SizedBox(
+                            width: 220,
+                            height: 52,
+                            child: OutlinedButton.icon(
+                              onPressed: _handleFingerprintLogin,
+                              icon: const Icon(Icons.fingerprint),
+                              label: const Text("Login with Fingerprint"),
                             ),
                           ),
                         ),

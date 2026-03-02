@@ -55,6 +55,9 @@ dependencies:
   webview_flutter: ^4.7.0
   webview_flutter_android: ^3.13.1
   url_launcher: ^6.3.0
+  local_auth: ^2.2.0
+  local_auth_android: ^1.0.45
+  sensors_plus: ^6.1.0
 
 dev_dependencies:
   flutter_test:
