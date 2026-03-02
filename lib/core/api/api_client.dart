@@ -21,8 +21,10 @@ class ApiClient {
         connectTimeout: ApiEndpoints.connectionTimeout,
         receiveTimeout: ApiEndpoints.receiveTimeout,
         headers: {
-          'Content-Type': 'application/json',
+          // ✅ Keep only Accept globally
           'Accept': 'application/json',
+          // ❌ Do NOT set Content-Type globally
+          // Dio will set it correctly per request (JSON vs FormData)
         },
       ),
     );
@@ -41,7 +43,6 @@ class ApiClient {
           Duration(seconds: 3),
         ],
         retryEvaluator: (error, attempt) {
-          // Retry only on connection errors and timeouts
           return error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.sendTimeout ||
               error.type == DioExceptionType.receiveTimeout ||
@@ -67,6 +68,41 @@ class ApiClient {
 
   Dio get dio => _dio;
 
+  // ---------- helper: set JSON content-type only when needed ----------
+  Options _withAutoContentType(Options? options, dynamic data) {
+  final mergedHeaders = <String, dynamic>{
+    ...(options?.headers ?? {}),
+  };
+
+  // ✅ If caller already set Content-Type header, don't touch contentType param
+  final hasHeaderContentType =
+      mergedHeaders.keys.any((k) => k.toLowerCase() == Headers.contentTypeHeader);
+
+  // ✅ FormData: let Dio set boundary; only set if not already set by caller
+  if (data is FormData) {
+    if (!hasHeaderContentType) {
+      return (options ?? Options()).copyWith(
+        headers: mergedHeaders,
+        contentType: 'multipart/form-data',
+      );
+    }
+    return (options ?? Options()).copyWith(headers: mergedHeaders);
+  }
+
+  // ✅ JSON: if caller already set header, don't set contentType param
+  if (data is Map || data is List) {
+    if (!hasHeaderContentType) {
+      return (options ?? Options()).copyWith(
+        headers: mergedHeaders,
+        contentType: 'application/json',
+      );
+    }
+    return (options ?? Options()).copyWith(headers: mergedHeaders);
+  }
+
+  return (options ?? Options()).copyWith(headers: mergedHeaders);
+}
+
   // GET request
   Future<Response> get(
     String path, {
@@ -87,7 +123,7 @@ class ApiClient {
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
+      options: _withAutoContentType(options, data),
     );
   }
 
@@ -102,7 +138,7 @@ class ApiClient {
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
+      options: _withAutoContentType(options, data),
     );
   }
 
@@ -117,7 +153,7 @@ class ApiClient {
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
+      options: _withAutoContentType(options, data),
     );
   }
 
@@ -132,11 +168,11 @@ class ApiClient {
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
+      options: _withAutoContentType(options, data),
     );
   }
 
-  // Multipart request for file uploads
+  // Multipart request for file uploads (kept, but optional now)
   Future<Response> uploadFile(
     String path, {
     required FormData formData,
@@ -146,7 +182,7 @@ class ApiClient {
     return _dio.post(
       path,
       data: formData,
-      options: options,
+      options: _withAutoContentType(options, formData),
       onSendProgress: onSendProgress,
     );
   }

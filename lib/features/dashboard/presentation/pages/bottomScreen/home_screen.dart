@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'booking_screen.dart'; // make sure to import BookingScreen
+import 'package:futal_booking_system/features/dashboard/presentation/pages/bottomScreen/booking_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -14,7 +14,6 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Row(
                 children: [
                   const CircleAvatar(
@@ -37,21 +36,15 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 16),
-
-            
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.location_on_outlined, color: Colors.green),
                     SizedBox(width: 8),
                     Text(
@@ -61,10 +54,7 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -76,11 +66,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.sports_soccer,
-                      size: 80,
-                      color: Colors.white,
-                    ),
+                    const Icon(Icons.sports_soccer, size: 80, color: Colors.white),
                     const SizedBox(height: 12),
                     const Text(
                       'Book Venues With The Best Offers!',
@@ -101,11 +87,10 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        // Navigate to BookingScreen
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const BookScreen(),
+                            builder: (_) => const BookingScreen(),
                           ),
                         );
                       },
@@ -114,9 +99,7 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -128,10 +111,7 @@ class HomeScreen extends StatelessWidget {
                   _MenuItem(icon: Icons.history, title: 'Event History'),
                   _MenuItem(icon: Icons.flash_on, title: 'Quick Book'),
                   _MenuItem(icon: Icons.place_outlined, title: 'Nearby Venues'),
-                  _MenuItem(
-                    icon: Icons.leaderboard_outlined,
-                    title: 'Leaderboard',
-                  ),
+                  _MenuItem(icon: Icons.leaderboard_outlined, title: 'Leaderboard'),
                   _MenuItem(icon: Icons.more_horiz, title: 'Others'),
                 ],
               ),

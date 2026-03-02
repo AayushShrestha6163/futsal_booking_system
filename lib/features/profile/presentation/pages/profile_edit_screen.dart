@@ -1,9 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:futal_booking_system/core/api/api_endpoints.dart';
+import 'package:futal_booking_system/core/services/storage/user_session_service.dart';
 import 'package:futal_booking_system/features/auth/presentation/pages/login_screen.dart';
 import 'package:futal_booking_system/features/profile/presentation/pages/edit_profile_screen.dart';
 
-class ProfileEditScreen extends StatelessWidget {
+class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
+
+  @override
+  ConsumerState<ProfileEditScreen> createState() => _ProfileEditScreenState();
+}
+
+class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
+  String? username; // we saved "First Last" here
+  String? profilePath; // "/uploads/xyz.jpg"
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    final session = ref.read(userSessionServiceProvider);
+
+    // ✅ Use your existing methods
+    final name = session.getCurrentUserUsername();
+    final pp = session.getCurrentUserProfilePicture();
+
+    if (!mounted) return;
+    setState(() {
+      username = name;
+      profilePath = pp;
+    });
+  }
+
+  Future<void> _goToEditProfile() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+    );
+
+    // ✅ Refresh after returning
+    await _loadSession();
+  }
+
+  String get displayName {
+    final name = (username ?? '').trim();
+    return name.isEmpty ? 'User' : name;
+  }
+
+  ImageProvider? get profileImage {
+    if (profilePath == null || profilePath!.trim().isEmpty) return null;
+    final url = "${ApiEndpoints.baseUrl}${profilePath!}";
+    return NetworkImage(url);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,26 +115,31 @@ class ProfileEditScreen extends StatelessWidget {
                       Stack(
                         alignment: Alignment.bottomRight,
                         children: [
-                          const CircleAvatar(
+                          CircleAvatar(
                             radius: 45,
-                            backgroundImage: AssetImage(
-                              'assets/images/profile.jpg',
-                            ),
+                            backgroundImage: profileImage,
+                            backgroundColor: Colors.white,
+                            child: profileImage == null
+                                ? const Icon(Icons.person, size: 40)
+                                : null,
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                          InkWell(
+                            onTap: _goToEditProfile,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 16),
                             ),
-                            child: const Icon(Icons.camera_alt, size: 16),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Aayush Shrestha',
-                        style: TextStyle(
+                      Text(
+                        displayName,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -100,33 +157,11 @@ class ProfileEditScreen extends StatelessWidget {
 
             const SizedBox(height: 80),
 
-            // MENU ITEMS
-            // const _ProfileTile(
-            //   icon: Icons.person_outline,
-            //   title: 'Account Information',
-            // ),
-            // _ProfileTile(
-            //   icon: Icons.lock_outline,
-            //   title: 'Password',
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => const PasswordScreen(),
-            //       ),
-            //     );
-            //   },
-            // ),
             _ProfileTile(
               icon: Icons.person,
               title: 'Edit Profile',
               color: const Color.fromARGB(255, 245, 228, 227),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-                );
-              },
+              onTap: _goToEditProfile,
             ),
             const _ProfileTile(
               icon: Icons.settings_outlined,
@@ -139,12 +174,15 @@ class ProfileEditScreen extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // LOGOUT
             _ProfileTile(
               icon: Icons.logout,
               title: 'Log out',
               color: const Color.fromARGB(255, 228, 197, 195),
-              onTap: () {
+              onTap: () async {
+                // ✅ Use your real method name
+                final session = ref.read(userSessionServiceProvider);
+                await session.clearSession();
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),

@@ -18,7 +18,7 @@ class _BottomNavigationScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const BookScreen(),
+    const BookingScreen(),
     const ProfileScreen(),
     const MyBookingsScreen(),
     const GyroscopeScreen(),
