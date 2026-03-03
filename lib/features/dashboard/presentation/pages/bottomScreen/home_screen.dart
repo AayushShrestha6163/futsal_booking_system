@@ -1,11 +1,24 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:futal_booking_system/core/services/storage/user_session_service.dart';
 import 'package:futal_booking_system/features/dashboard/presentation/pages/bottomScreen/booking_screen.dart';
+import 'package:futal_booking_system/features/payment/presentation/providers/booking_stats_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(userSessionServiceProvider);
+
+    final fullName = session.getCurrentUserUsername() ?? "User";
+    final profilePic = session.getCurrentUserProfilePicture();
+
+    
+    final totalBookings = ref.watch(totalBookingsProvider);
+    final hoursPlayed = ref.watch(hoursPlayedProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xffe9f0ef),
       body: SafeArea(
@@ -14,17 +27,18 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 22,
-                    backgroundImage: AssetImage('assets/images/profile.jpg'),
+                    backgroundImage: _getProfileImage(profilePic),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Hey, Aayush Shrestha 👋',
-                      style: TextStyle(
+                      'Hey, $fullName 👋',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -36,9 +50,13 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               const SizedBox(height: 16),
+
+              // ===== Location =====
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -54,7 +72,35 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
               const SizedBox(height: 20),
+
+             
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: "Total Bookings",
+                      value: totalBookings.toString(),
+                      icon: Icons.calendar_month,
+                      iconColor: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      title: "Hours Played",
+                      value: hoursPlayed,
+                      icon: Icons.access_time,
+                      iconColor: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -66,7 +112,8 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.sports_soccer, size: 80, color: Colors.white),
+                    const Icon(Icons.sports_soccer,
+                        size: 80, color: Colors.white),
                     const SizedBox(height: 12),
                     const Text(
                       'Book Venues With The Best Offers!',
@@ -78,6 +125,8 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -99,54 +148,62 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                children: const [
-                  _MenuItem(icon: Icons.calendar_month, title: 'My Calendar'),
-                  _MenuItem(icon: Icons.history, title: 'Event History'),
-                  _MenuItem(icon: Icons.flash_on, title: 'Quick Book'),
-                  _MenuItem(icon: Icons.place_outlined, title: 'Nearby Venues'),
-                  _MenuItem(icon: Icons.leaderboard_outlined, title: 'Leaderboard'),
-                  _MenuItem(icon: Icons.more_horiz, title: 'Others'),
-                ],
-              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  
+  ImageProvider _getProfileImage(String? path) {
+    if (path == null || path.isEmpty) {
+      return const AssetImage('assets/images/profile.jpg');
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return NetworkImage(path);
+    }
+
+    return FileImage(File(path));
+  }
 }
 
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
+class _StatCard extends StatelessWidget {
   final String title;
+  final String value;
+  final IconData icon;
+  final Color iconColor;
 
-  const _MenuItem({required this.icon, required this.title});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.green),
-          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(fontSize: 13)),
+          const SizedBox(height: 6),
           Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          const SizedBox(height: 10),
+          Icon(icon, size: 22, color: iconColor),
         ],
       ),
     );

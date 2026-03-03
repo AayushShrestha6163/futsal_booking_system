@@ -37,13 +37,13 @@ class BookingItem {
   }
 }
 
-// datasource provider (reuse your BookingRemoteDataSource)
+
 final bookingRemoteForListProvider = Provider<BookingRemoteDataSource>((ref) {
   final api = ref.read(apiClientProvider);
   return BookingRemoteDataSource(api);
 });
 
-// ✅ fetch my bookings
+
 final myBookingsProvider = FutureProvider<List<BookingItem>>((ref) async {
   final ds = ref.read(bookingRemoteForListProvider);
   final res = await ds.getMyBookings();
@@ -58,7 +58,6 @@ final myBookingsProvider = FutureProvider<List<BookingItem>>((ref) async {
   throw Exception(res["message"]?.toString() ?? "Failed to load bookings");
 });
 
-// ✅ cancel action
 final cancelBookingProvider =
     StateNotifierProvider<CancelBookingNotifier, AsyncValue<void>>((ref) {
   return CancelBookingNotifier(ref);
@@ -79,7 +78,7 @@ class CancelBookingNotifier extends StateNotifier<AsyncValue<void>> {
         throw Exception(res["message"]?.toString() ?? "Cancel failed");
       }
 
-      // ✅ refresh list
+      
       ref.invalidate(myBookingsProvider);
     });
   }
