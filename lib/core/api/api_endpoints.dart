@@ -35,5 +35,9 @@ class ApiEndpoints {
   static const String initiateEsewa = '/api/payments/esewa/initiate';
   // success/failure are for browser redirect, Flutter doesn't call them directly
 
+  // ============ Password Reset ============
+  static const String requestPasswordReset = '/api/auth/request-password-reset';
+  static String resetPassword(String token) => '/api/auth/reset-password/$token';
+
   
 }
