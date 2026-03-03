@@ -9,7 +9,6 @@ import 'package:futal_booking_system/features/profile/presentation/state/profile
 import 'package:futal_booking_system/features/profile/presentation/view_models/profile_view_model.dart';
 import 'package:futal_booking_system/features/profile/presentation/widgets/media_picker_buttom_sheet.dart';
 import 'package:image_picker/image_picker.dart';
-
 import 'package:permission_handler/permission_handler.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -20,14 +19,21 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  final primaryOrange = const Color(0xFFE64A19);
-  final lightYellow = const Color(0xFFFFF9C4);
-  final buttonOrange = const Color(0xFFFFB74D);
+  // ✅ Theme Colors (change here)
+  static const bg = Color(0xFFF6F7FB);
+  static const card = Colors.white;
+  static const border = Color(0x14000000);
+
+  static const accent = Color(0xFF16A34A); // ✅ green accent
+  static const accent2 = Color(0xFF22C55E); // lighter green
+
   final _formKey = GlobalKey<FormState>();
 
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+
   bool _isDataLoaded = false;
+
   final List<XFile?> _profile = [];
   String? _profilePicture;
 
@@ -36,20 +42,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _loadUserData() async {
     final userSession = ref.read(userSessionServiceProvider);
     final userId = userSession.getCurrentUserId();
-
     if (userId != null) {
-      await ref
-          .read(profileViewModelProvider.notifier)
-          .getProfileById(userId: userId);
+      await ref.read(profileViewModelProvider.notifier).getProfileById(userId: userId);
     }
   }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadUserData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserData());
   }
 
   @override
@@ -67,18 +68,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final result = await permission.request();
       return result.isGranted;
     }
-
-    if (status.isPermanentlyDenied) {
-      // _showPermissionDeniedDialog();
-      return false;
-    }
-
+    if (status.isPermanentlyDenied) return false;
     return false;
   }
 
   Future<void> _pickFromCamera() async {
-    final hasPermission = await _requestPermission(Permission.camera);
-    if (!hasPermission) return;
+    final ok = await _requestPermission(Permission.camera);
+    if (!ok) return;
 
     final XFile? photo = await _imagePicker.pickImage(
       source: ImageSource.camera,
@@ -94,20 +90,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
+    final XFile? image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
 
-      if (image != null) {
-        setState(() {
-          _profile.clear();
-          _profile.add(XFile(image.path));
-        });
-      }
-    } catch (e) {
-      debugPrint('Image picker error: $e');
+    if (image != null) {
+      setState(() {
+        _profile.clear();
+        _profile.add(XFile(image.path));
+      });
     }
   }
 
@@ -120,280 +112,310 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   void _clearImage() {
-    setState(() {
-      _profile.clear();
-    });
+    setState(() => _profile.clear());
   }
 
-  void _handleSubmit() async {
+  Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
-      // Process data
-      await ref
-          .read(profileViewModelProvider.notifier)
-          .updateProfile(
+      await ref.read(profileViewModelProvider.notifier).updateProfile(
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
-
             profile: _profile.isNotEmpty ? File(_profile.first!.path) : null,
           );
     }
   }
 
+  ImageProvider? _avatarImage() {
+    if (_profile.isNotEmpty) {
+      return FileImage(File(_profile.first!.path));
+    }
+    if (_profilePicture != null && _profilePicture!.isNotEmpty) {
+      return NetworkImage('${ApiEndpoints.baseUrl}$_profilePicture');
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<ProfileState>(profileViewModelProvider, (previous, next) {
-      if (next.status == ProfileStatus.loaded &&
-          !_isDataLoaded &&
-          next.user != null) {
+      if (next.status == ProfileStatus.loaded && !_isDataLoaded && next.user != null) {
         _isDataLoaded = true;
         _firstNameController.text = next.user!.firstName ?? '';
         _lastNameController.text = next.user!.lastName ?? '';
         _profilePicture = next.user!.profilePicture;
-        print("profile picture ${next.user!.profilePicture}");
       } else if (next.status == ProfileStatus.updated) {
         SnackbarUtils.showSuccess(context, 'Profile updated successfully!');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+          MaterialPageRoute(builder: (_) => const ProfileEditScreen()),
         );
-      } else if (next.status == ProfileStatus.error &&
-          next.errorMessage != null) {
+      } else if (next.status == ProfileStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
     });
 
-    final profileState = ref.watch(profileViewModelProvider);
+    final st = ref.watch(profileViewModelProvider);
+
     return Scaffold(
-      backgroundColor: lightYellow,
-      appBar: AppBar(
-        backgroundColor: primaryOrange,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-      ),
-      body: profileState.status == ProfileStatus.loading && !_isDataLoaded
+      backgroundColor: bg,
+      body: st.status == ProfileStatus.loading && !_isDataLoaded
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 25,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      /// Profile Avatar
-                      if (_profile.isNotEmpty)
-                        GestureDetector(
-                          onTap: _showMediaPicker,
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 60,
-                                backgroundColor: Colors.pink.shade300,
-                                backgroundImage:
-                                    FileImage(File(_profile.first!.path))
-                                        as ImageProvider?,
-                                child: null,
-                              ),
-                              Positioned(
-                                top: 10,
-                                right: 10,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: _clearImage,
-                                    child: const Text(
-                                      'x',
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                  ),
+          : CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: bg,
+                  leading: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  ),
+                  expandedHeight: 210,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [accent, Color(0xFF0EA5E9)],
+                        ),
+                      ),
+                      child: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 65, 20, 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                "Edit Profile",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
                                 ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                "Update your name and profile photo",
+                                style: TextStyle(color: Color(0xDFFFFFFF)),
                               ),
                             ],
                           ),
-                        )
-                      else if (_profilePicture != null &&
-                          _profilePicture!.isNotEmpty)
-                        GestureDetector(
-                          onTap: _showMediaPicker,
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 60,
-                                backgroundImage: NetworkImage(
-                                  '${ApiEndpoints.baseUrl}$_profilePicture',
-                                ),
-                              ),
-                              Positioned(
-                                top: 10,
-                                right: 10,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: _clearImage,
-                                    child: const Text(
-                                      'x',
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        GestureDetector(
-                          onTap: _showMediaPicker,
-                          child: CircleAvatar(
-                            radius: 60,
-                            backgroundColor: Colors.pink.shade300,
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 40,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 30),
-
-                      /// Form Card
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _inputField(
-                              controller: _firstNameController,
-
-                              label: 'First Name',
-                              icon: Icons.person_outline,
-                              hint: 'Change first name',
-                            ),
-                            const SizedBox(height: 16),
-                            _inputField(
-                              controller: _lastNameController,
-                              label: 'Last Name',
-                              icon: Icons.person_outline,
-                              hint: 'Change last name',
-                            ),
-                            const SizedBox(height: 16),
-                          ],
                         ),
                       ),
-
-                      const SizedBox(height: 30),
-
-                      /// Save Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: buttonOrange,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: _handleSubmit,
-                          child: const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      /// Cancel Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: primaryOrange),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: primaryOrange,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+                    child: Column(
+                      children: [
+                        // ✅ Avatar Card
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: border),
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 18,
+                                offset: Offset(0, 10),
+                                color: Color(0x12000000),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 56,
+                                    backgroundColor: const Color(0xFFEFF6FF),
+                                    backgroundImage: _avatarImage(),
+                                    child: _avatarImage() == null
+                                        ? const Icon(Icons.person, size: 52, color: Colors.black54)
+                                        : null,
+                                  ),
+                                  InkWell(
+                                    onTap: _showMediaPicker,
+                                    borderRadius: BorderRadius.circular(30),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0x14000000)),
+                                      ),
+                                      child: const Icon(Icons.camera_alt, size: 18),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: _showMediaPicker,
+                                    icon: const Icon(Icons.photo_library_outlined),
+                                    label: const Text("Change Photo"),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: accent,
+                                      side: BorderSide(color: accent.withOpacity(0.35)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  if (_profile.isNotEmpty)
+                                    OutlinedButton.icon(
+                                      onPressed: _clearImage,
+                                      icon: const Icon(Icons.close),
+                                      label: const Text("Remove"),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                        side: BorderSide(color: Colors.red.withOpacity(0.35)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // ✅ Form Card
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: border),
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 18,
+                                offset: Offset(0, 10),
+                                color: Color(0x12000000),
+                              ),
+                            ],
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Personal Info",
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                ),
+                                const SizedBox(height: 14),
+
+                                _niceField(
+                                  label: "First Name",
+                                  controller: _firstNameController,
+                                  icon: Icons.person_outline,
+                                  hint: "Enter first name",
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) return "First name is required";
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                _niceField(
+                                  label: "Last Name",
+                                  controller: _lastNameController,
+                                  icon: Icons.person_outline,
+                                  hint: "Enter last name",
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) return "Last name is required";
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ✅ Buttons
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _handleSubmit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: accent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              "Save Changes",
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.black87,
+                              side: const BorderSide(color: Color(0x26000000)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }
 
-  Widget _inputField({
+  Widget _niceField({
     required String label,
+    required TextEditingController controller,
     required IconData icon,
     required String hint,
-    required TextEditingController controller,
-    TextInputType keyboardType = TextInputType.text,
+    required String? Function(String?) validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-        ),
-        const SizedBox(height: 6),
-        TextField(
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        const SizedBox(height: 8),
+        TextFormField(
           controller: controller,
-          keyboardType: keyboardType,
+          validator: validator,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.orange),
             hintText: hint,
+            prefixIcon: Icon(icon, color: Colors.black54),
             filled: true,
-            fillColor: const Color(0xFFFFFDE7),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            fillColor: const Color(0xFFF3F5F9),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,

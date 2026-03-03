@@ -13,7 +13,7 @@ class ProfileEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
-  String? username; // we saved "First Last" here
+  String? username; // "First Last"
   String? profilePath; // "/uploads/xyz.jpg"
 
   @override
@@ -24,8 +24,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   Future<void> _loadSession() async {
     final session = ref.read(userSessionServiceProvider);
-
-    // ✅ Use your existing methods
     final name = session.getCurrentUserUsername();
     final pp = session.getCurrentUserProfilePicture();
 
@@ -41,8 +39,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       context,
       MaterialPageRoute(builder: (_) => const EditProfileScreen()),
     );
-
-    // ✅ Refresh after returning
     await _loadSession();
   }
 
@@ -59,138 +55,280 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Modern dark palette (change these to your preferred colors)
+    const bg = Color(0xFF0B1220);
+    const card = Color(0xFF121B2E);
+    const card2 = Color(0xFF0F172A);
+    const border = Color(0x1AFFFFFF);
+
+    const primary = Color(0xFF16A34A); // ✅ green accent
+    const secondary = Color(0xFF22C55E); // lighter green
+
     return Scaffold(
-      backgroundColor: const Color(0xff1e1e2c),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // HEADER
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  height: 220,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xffea6a87),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(40),
-                      bottomRight: Radius.circular(40),
-                    ),
+      backgroundColor: bg,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            backgroundColor: bg,
+            elevation: 0,
+            pinned: true,
+            expandedHeight: 240,
+            leading: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+            ),
+            title: const Text(
+              "Profile",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF16A34A), // green
+                      Color(0xFF0EA5E9), // teal/blue
+                    ],
                   ),
                 ),
-
-                // APP BAR
-                SafeArea(
+                child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 70, 20, 16),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
+                        // Avatar
+                        Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: CircleAvatar(
+                                radius: 42,
+                                backgroundColor: Colors.white,
+                                backgroundImage: profileImage,
+                                child: profileImage == null
+                                    ? const Icon(Icons.person, size: 42, color: Colors.black54)
+                                    : null,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: _goToEditProfile,
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.35),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
+                                ),
+                                child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
-                        const Text(
-                          'Profile',
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+
+                        const SizedBox(width: 14),
+
+                        // Name + subtitle
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Manage your account & profile details",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
 
-                // PROFILE IMAGE + NAME
-                Positioned(
-                  bottom: -50,
-                  left: 0,
-                  right: 0,
-                  child: Column(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+              child: Column(
+                children: [
+                  // ✅ Quick action row
+                  Row(
                     children: [
-                      Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          CircleAvatar(
-                            radius: 45,
-                            backgroundImage: profileImage,
-                            backgroundColor: Colors.white,
-                            child: profileImage == null
-                                ? const Icon(Icons.person, size: 40)
-                                : null,
-                          ),
-                          InkWell(
-                            onTap: _goToEditProfile,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.camera_alt, size: 16),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: _ActionCard(
+                          title: "Edit Profile",
+                          subtitle: "Name, photo",
+                          icon: Icons.person_outline,
+                          bg: card,
+                          border: border,
+                          onTap: _goToEditProfile,
                         ),
                       ),
-                      const Text(
-                        'View full profile',
-                        style: TextStyle(color: Colors.white70),
-                      ),
+                      const SizedBox(width: 12),
                     ],
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 14),
+
+                  // ✅ Settings list
+                  _NiceTile(
+                    icon: Icons.settings_outlined,
+                    title: "Settings",
+                    subtitle: "App preferences",
+                    cardColor: card2,
+                    borderColor: border,
+                    onTap: () {},
+                  ),
+                  _NiceTile(
+                    icon: Icons.help_outline,
+                    title: "Help & Support",
+                    subtitle: "FAQ & contact",
+                    cardColor: card2,
+                    borderColor: border,
+                    onTap: () {},
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // ✅ Logout button (highlight)
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          primary.withOpacity(0.15),
+                          secondary.withOpacity(0.12),
+                        ],
+                      ),
+                      border: Border.all(color: border),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.white),
+                      title: const Text(
+                        "Log out",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: const Text(
+                        "Sign out from this device",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
+                      onTap: () async {
+                        final session = ref.read(userSessionServiceProvider);
+                        await session.clearSession();
+
+                        if (!mounted) return;
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-            const SizedBox(height: 80),
+// ✅ Small card buttons
+class _ActionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color bg;
+  final Color border;
+  final VoidCallback? onTap;
 
-            _ProfileTile(
-              icon: Icons.person,
-              title: 'Edit Profile',
-              color: const Color.fromARGB(255, 245, 228, 227),
-              onTap: _goToEditProfile,
+  const _ActionCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.bg,
+    required this.border,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border),
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 18,
+              offset: Offset(0, 10),
+              color: Color(0x12000000),
             ),
-            const _ProfileTile(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 42,
+              width: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: Colors.white),
             ),
-            const _ProfileTile(
-              icon: Icons.help_outline,
-              title: 'Help & Support',
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                  ),
+                ],
+              ),
             ),
-
-            const SizedBox(height: 40),
-
-            _ProfileTile(
-              icon: Icons.logout,
-              title: 'Log out',
-              color: const Color.fromARGB(255, 228, 197, 195),
-              onTap: () async {
-                // ✅ Use your real method name
-                final session = ref.read(userSessionServiceProvider);
-                await session.clearSession();
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              },
-            ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -198,41 +336,56 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 }
 
-class _ProfileTile extends StatelessWidget {
+// ✅ Better tiles
+class _NiceTile extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Color? color;
+  final String subtitle;
+  final Color cardColor;
+  final Color borderColor;
   final VoidCallback? onTap;
 
-  const _ProfileTile({
+  const _NiceTile({
     required this.icon,
     required this.title,
-    this.color,
+    required this.subtitle,
+    required this.cardColor,
+    required this.borderColor,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
-            color: const Color(0xff2a2a3c),
-            borderRadius: BorderRadius.circular(14),
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: color ?? Colors.white70),
-              const SizedBox(width: 16),
-              Text(
-                title,
-                style: TextStyle(color: color ?? Colors.white, fontSize: 15),
+          child: ListTile(
+            leading: Container(
+              height: 42,
+              width: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+              child: Icon(icon, color: Colors.white),
+            ),
+            title: Text(
+              title,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
           ),
         ),
       ),
