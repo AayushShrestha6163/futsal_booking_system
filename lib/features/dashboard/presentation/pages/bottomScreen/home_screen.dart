@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/core/api/api_endpoints.dart';
 import 'package:futal_booking_system/core/services/storage/user_session_service.dart';
 import 'package:futal_booking_system/features/dashboard/presentation/pages/bottomScreen/booking_screen.dart';
 import 'package:futal_booking_system/features/payment/presentation/providers/booking_stats_provider.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/providers/gyroscope_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -20,6 +22,10 @@ class HomeScreen extends ConsumerWidget {
 
     final totalBookings = ref.watch(totalBookingsProvider);
     final hoursPlayed = ref.watch(hoursPlayedProvider);
+    final gyro = ref.watch(gyroscopeProvider);
+
+    final tiltX = (gyro.y * 0.08).clamp(-0.12, 0.12);
+    final tiltY = (gyro.x * 0.08).clamp(-0.12, 0.12);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -36,7 +42,6 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ Top Row
                 Row(
                   children: [
                     CircleAvatar(
@@ -54,7 +59,10 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           const Text(
                             "Welcome back,",
-                            style: TextStyle(color: Colors.black54, fontSize: 12.5),
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12.5,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -91,7 +99,6 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 14),
 
-                // ✅ Green Header Card
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
@@ -120,7 +127,10 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               "Your Location",
-                              style: TextStyle(color: Color(0xDFFFFFFF), fontSize: 12.5),
+                              style: TextStyle(
+                                color: Color(0xDFFFFFFF),
+                                fontSize: 12.5,
+                              ),
                             ),
                             SizedBox(height: 3),
                             Text(
@@ -140,7 +150,6 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 14),
 
-                // ✅ Stats Row
                 Row(
                   children: [
                     Expanded(
@@ -167,80 +176,102 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
-                // ✅ Promo Card + Book Now
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 18,
-                        offset: Offset(0, 10),
-                        color: Color(0x22000000),
+                Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateX(tiltX)
+                    ..rotateY(-tiltY),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          CircleAvatar(
-                            radius: 26,
-                            backgroundColor: Color(0x33FFFFFF),
-                            child: Icon(Icons.sports_soccer, color: Colors.white, size: 26),
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              "Book venues with the best offers!",
-                              style: TextStyle(
+                      boxShadow: const [
+                        BoxShadow(
+                          blurRadius: 18,
+                          offset: Offset(0, 10),
+                          color: Color(0x22000000),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundColor: Color(0x33FFFFFF),
+                              child: Icon(
+                                Icons.sports_soccer,
                                 color: Colors.white,
-                                fontSize: 16.5,
-                                fontWeight: FontWeight.w900,
+                                size: 26,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Choose a court, select a slot, and confirm your booking in seconds.",
-                        style: TextStyle(color: Colors.white.withOpacity(0.9)),
-                      ),
-                      const SizedBox(height: 14),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Book venues with the best offers!",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Choose a court, select a slot, and confirm your booking in seconds.",
+                          style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                        ),
+                        const SizedBox(height: 14),
 
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: green,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: green,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const BookingScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Book Now",
+                              style: TextStyle(fontWeight: FontWeight.w900),
                             ),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const BookingScreen()),
-                            );
-                          },
-                          child: const Text(
-                            "Book Now",
-                            style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          "Gyroscope  X:${gyro.x.toStringAsFixed(2)}  Y:${gyro.y.toStringAsFixed(2)}  Z:${gyro.z.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -254,13 +285,14 @@ class HomeScreen extends ConsumerWidget {
   ImageProvider? _getProfileImage(String? path) {
     if (path == null || path.isEmpty) return null;
 
-    // if backend profile: "/uploads/.."
-    if (path.startsWith("/uploads")) return NetworkImage("${ApiEndpoints.baseUrl}$path");
+    if (path.startsWith("/uploads")) {
+      return NetworkImage("${ApiEndpoints.baseUrl}$path");
+    }
 
-    // already full url
-    if (path.startsWith('http://') || path.startsWith('https://')) return NetworkImage(path);
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return NetworkImage(path);
+    }
 
-    // local file path
     return FileImage(File(path));
   }
 }
@@ -298,7 +330,10 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: Colors.black54, fontSize: 12.5)),
+          Text(
+            title,
+            style: const TextStyle(color: Colors.black54, fontSize: 12.5),
+          ),
           const SizedBox(height: 8),
           Text(
             value,
@@ -313,7 +348,10 @@ class _StatCard extends StatelessWidget {
               Icon(icon, size: 20, color: chipColor),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: chipColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(999),
