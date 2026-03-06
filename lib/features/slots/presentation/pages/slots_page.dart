@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/features/bookings/presentation/pages/booking_screen.dart';
 import 'package:futal_booking_system/features/slots/presentation/providers/slots_provider.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/providers/gyroscope_provider.dart';
 
 class SlotsPage extends ConsumerWidget {
   final String courtId;
@@ -13,6 +14,10 @@ class SlotsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final date = ref.watch(selectedDateProvider);
     final asyncSlots = ref.watch(slotsProvider(courtId));
+    final gyro = ref.watch(gyroscopeProvider);
+
+    final tiltX = (gyro.y * 0.06).clamp(-0.10, 0.10);
+    final tiltY = (gyro.x * 0.06).clamp(-0.10, 0.10);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -27,87 +32,97 @@ class SlotsPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // ✅ Date Card (Green theme)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: green,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
-                    color: Color(0x22000000),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Color(0x33FFFFFF),
-                    child: Icon(Icons.calendar_month, color: Colors.white),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Selected Date",
-                          style: TextStyle(
-                            color: Color(0xDFFFFFFF),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          date,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateX(tiltX)
+                ..rotateY(-tiltY),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: green,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                      color: Color(0x22000000),
                     ),
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.white.withOpacity(0.18),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Color(0x33FFFFFF),
+                      child: Icon(Icons.calendar_month, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Selected Date",
+                            style: TextStyle(
+                              color: Color(0xDFFFFFFF),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            date,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    onPressed: () async {
-                      final now = DateTime.now();
-                      final picked = await showDatePicker(
-                        context: context,
-                        firstDate: now,
-                        lastDate: now.add(const Duration(days: 30)),
-                        initialDate: now,
-                      );
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.white.withOpacity(0.18),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          firstDate: now,
+                          lastDate: now.add(const Duration(days: 30)),
+                          initialDate: now,
+                        );
 
-                      if (picked != null) {
-                        final yyyy = picked.year.toString().padLeft(4, '0');
-                        final mm = picked.month.toString().padLeft(2, '0');
-                        final dd = picked.day.toString().padLeft(2, '0');
+                        if (picked != null) {
+                          final yyyy = picked.year.toString().padLeft(4, '0');
+                          final mm = picked.month.toString().padLeft(2, '0');
+                          final dd = picked.day.toString().padLeft(2, '0');
 
-                        ref.read(selectedDateProvider.notifier).state = "$yyyy-$mm-$dd";
-                        ref.refresh(slotsProvider(courtId));
-                      }
-                    },
-                    child: const Text(
-                      "Change",
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                          ref.read(selectedDateProvider.notifier).state =
+                              "$yyyy-$mm-$dd";
+                          ref.refresh(slotsProvider(courtId));
+                        }
+                      },
+                      child: const Text(
+                        "Change",
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -178,15 +193,17 @@ class SlotsPage extends ConsumerWidget {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(
-                                    available ? Icons.check_circle : Icons.block,
+                                    available
+                                        ? Icons.check_circle
+                                        : Icons.block,
                                     color: available ? green : Colors.red,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         s.time,
@@ -199,17 +216,21 @@ class SlotsPage extends ConsumerWidget {
                                       Text(
                                         available ? "Available" : "Booked",
                                         style: TextStyle(
-                                          color: available ? green : Colors.red,
+                                          color: available
+                                              ? green
+                                              : Colors.red,
                                           fontWeight: FontWeight.w800,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-
                                 if (available)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: green,
                                       borderRadius: BorderRadius.circular(14),
@@ -223,7 +244,10 @@ class SlotsPage extends ConsumerWidget {
                                     ),
                                   )
                                 else
-                                  const Icon(Icons.lock, color: Colors.black38),
+                                  const Icon(
+                                    Icons.lock,
+                                    color: Colors.black38,
+                                  ),
                               ],
                             ),
                           ),

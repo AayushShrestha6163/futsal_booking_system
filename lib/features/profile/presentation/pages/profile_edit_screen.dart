@@ -13,8 +13,8 @@ class ProfileEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
-  String? username; // "First Last"
-  String? profilePath; // "/uploads/xyz.jpg"
+  String? username; 
+  String? profilePath; 
 
   @override
   void initState() {
@@ -55,14 +55,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Modern dark palette (change these to your preferred colors)
+    
     const bg = Color(0xFF0B1220);
     const card = Color(0xFF121B2E);
     const card2 = Color(0xFF0F172A);
     const border = Color(0x1AFFFFFF);
 
-    const primary = Color(0xFF16A34A); // ✅ green accent
-    const secondary = Color(0xFF22C55E); // lighter green
+    const primary = Color(0xFF16A34A); 
+    const secondary = Color(0xFF22C55E); 
 
     return Scaffold(
       backgroundColor: bg,
@@ -79,7 +79,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             ),
             title: const Text(
               "Profile",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -88,8 +91,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFF16A34A), // green
-                      Color(0xFF0EA5E9), // teal/blue
+                      Color(0xFF16A34A), 
+                      Color(0xFF0EA5E9), 
                     ],
                   ),
                 ),
@@ -99,7 +102,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        // Avatar
+                        
                         Stack(
                           alignment: Alignment.bottomRight,
                           children: [
@@ -114,7 +117,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                 backgroundColor: Colors.white,
                                 backgroundImage: profileImage,
                                 child: profileImage == null
-                                    ? const Icon(Icons.person, size: 42, color: Colors.black54)
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 42,
+                                        color: Colors.black54,
+                                      )
                                     : null,
                               ),
                             ),
@@ -126,9 +133,16 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.35),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white.withOpacity(0.6), width: 1),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.6),
+                                    width: 1,
+                                  ),
                                 ),
-                                child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -136,7 +150,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
                         const SizedBox(width: 14),
 
-                        // Name + subtitle
+                        
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -176,7 +190,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
               child: Column(
                 children: [
-                  // ✅ Quick action row
+                  
                   Row(
                     children: [
                       Expanded(
@@ -195,27 +209,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
                   const SizedBox(height: 14),
 
-                  // ✅ Settings list
-                  _NiceTile(
-                    icon: Icons.settings_outlined,
-                    title: "Settings",
-                    subtitle: "App preferences",
-                    cardColor: card2,
-                    borderColor: border,
-                    onTap: () {},
-                  ),
-                  _NiceTile(
-                    icon: Icons.help_outline,
-                    title: "Help & Support",
-                    subtitle: "FAQ & contact",
-                    cardColor: card2,
-                    borderColor: border,
-                    onTap: () {},
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ✅ Logout button (highlight)
+                 
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -232,13 +226,20 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       leading: const Icon(Icons.logout, color: Colors.white),
                       title: const Text(
                         "Log out",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       subtitle: const Text(
                         "Sign out from this device",
                         style: TextStyle(color: Colors.white70),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Colors.white70,
+                      ),
                       onTap: () async {
                         final session = ref.read(userSessionServiceProvider);
                         await session.clearSession();
@@ -246,7 +247,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         if (!mounted) return;
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
                         );
                       },
                     ),
@@ -261,7 +264,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 }
 
-// ✅ Small card buttons
+
 class _ActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -324,7 +327,10 @@ class _ActionCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ],
               ),
@@ -379,13 +385,20 @@ class _NiceTile extends StatelessWidget {
             ),
             title: Text(
               title,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             subtitle: Text(
               subtitle,
               style: const TextStyle(color: Colors.white70),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white70),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.white70,
+            ),
           ),
         ),
       ),

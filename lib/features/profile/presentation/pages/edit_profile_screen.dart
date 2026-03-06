@@ -24,8 +24,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   static const card = Colors.white;
   static const border = Color(0x14000000);
 
-  static const accent = Color(0xFF16A34A); // ✅ green accent
-  static const accent2 = Color(0xFF22C55E); // lighter green
+  static const accent = Color(0xFF16A34A); 
+  static const accent2 = Color(0xFF22C55E); 
 
   final _formKey = GlobalKey<FormState>();
 
@@ -212,7 +212,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
                     child: Column(
                       children: [
-                        // ✅ Avatar Card
+                        
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(18),
@@ -294,7 +294,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                         const SizedBox(height: 14),
 
-                        // ✅ Form Card
+                       
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(18),
@@ -349,7 +349,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                         const SizedBox(height: 16),
 
-                        // ✅ Buttons
+                        
                         SizedBox(
                           width: double.infinity,
                           height: 52,

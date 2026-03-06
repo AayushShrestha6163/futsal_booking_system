@@ -1,8 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/core/api/api_endpoints.dart';
 import 'package:futal_booking_system/features/courts/presentation/pages/court_details_page.dart';
 import 'package:futal_booking_system/features/courts/presentation/providers/courts_provider.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/providers/gyroscope_provider.dart';
 
 class BookingScreen extends ConsumerWidget {
   const BookingScreen({super.key});
@@ -14,7 +16,6 @@ class BookingScreen extends ConsumerWidget {
     if (img == null || (img is String && img.isEmpty)) return null;
 
     final s = img.toString();
-    // ✅ use your baseUrl
     if (s.startsWith("/uploads")) return "${ApiEndpoints.baseUrl}$s";
     if (s.startsWith("uploads/")) return "${ApiEndpoints.baseUrl}/$s";
     return "${ApiEndpoints.baseUrl}/uploads/$s";
@@ -23,6 +24,10 @@ class BookingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final courtsAsync = ref.watch(courtsProvider);
+    final gyro = ref.watch(gyroscopeProvider);
+
+    final tiltX = (gyro.y * 0.06).clamp(-0.10, 0.10);
+    final tiltY = (gyro.x * 0.06).clamp(-0.10, 0.10);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -49,54 +54,64 @@ class BookingScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: courts.length + 1,
               itemBuilder: (_, i) {
-                // ✅ top header card
                 if (i == 0) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: green,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          blurRadius: 18,
-                          offset: Offset(0, 10),
-                          color: Color(0x22000000),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: const [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundColor: Color(0x33FFFFFF),
-                          child: Icon(Icons.calendar_month, color: Colors.white, size: 26),
-                        ),
-                        SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Choose a Court",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                "Tap a court to see slots & book",
-                                style: TextStyle(
-                                  color: Color(0xDFFFFFFF),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001)
+                      ..rotateX(tiltX)
+                      ..rotateY(-tiltY),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: green,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(
+                            blurRadius: 18,
+                            offset: Offset(0, 10),
+                            color: Color(0x22000000),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        children: const [
+                          CircleAvatar(
+                            radius: 26,
+                            backgroundColor: Color(0x33FFFFFF),
+                            child: Icon(
+                              Icons.calendar_month,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          ),
+                          SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Choose a Court",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  "Tap a court to see slots & book",
+                                  style: TextStyle(
+                                    color: Color(0xDFFFFFFF),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
@@ -130,10 +145,11 @@ class BookingScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ✅ Image with gradient overlay
                         if (imageUrl != null)
                           ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(18),
+                            ),
                             child: Stack(
                               children: [
                                 Image.network(
@@ -143,7 +159,9 @@ class BookingScreen extends ConsumerWidget {
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => const SizedBox(
                                     height: 170,
-                                    child: Center(child: Icon(Icons.image_not_supported)),
+                                    child: Center(
+                                      child: Icon(Icons.image_not_supported),
+                                    ),
                                   ),
                                 ),
                                 Positioned.fill(
@@ -178,13 +196,11 @@ class BookingScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
-
                         Padding(
                           padding: const EdgeInsets.all(14),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ✅ If no image, show name here
                               if (imageUrl == null)
                                 Text(
                                   c.name,
@@ -193,22 +209,27 @@ class BookingScreen extends ConsumerWidget {
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-
                               const SizedBox(height: 8),
-
                               Row(
                                 children: [
                                   Expanded(
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.location_on_outlined, size: 18, color: Colors.black54),
+                                        const Icon(
+                                          Icons.location_on_outlined,
+                                          size: 18,
+                                          color: Colors.black54,
+                                        ),
                                         const SizedBox(width: 6),
                                         Expanded(
                                           child: Text(
-                                            (c.location ?? "Unknown location").toString(),
+                                            (c.location ?? "Unknown location")
+                                                .toString(),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(color: Colors.black54),
+                                            style: const TextStyle(
+                                              color: Colors.black54,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -216,7 +237,10 @@ class BookingScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: 10),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: green.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(999),
@@ -232,10 +256,7 @@ class BookingScreen extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-
                               const SizedBox(height: 12),
-
-                              // ✅ Book Now button (green)
                               SizedBox(
                                 width: double.infinity,
                                 height: 44,
@@ -244,7 +265,8 @@ class BookingScreen extends ConsumerWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => CourtDetailsPage(courtId: c.id),
+                                        builder: (_) =>
+                                            CourtDetailsPage(courtId: c.id),
                                       ),
                                     );
                                   },
@@ -254,7 +276,11 @@ class BookingScreen extends ConsumerWidget {
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
-                                  icon: const Icon(Icons.sports_soccer, size: 18, color: Colors.white),
+                                  icon: const Icon(
+                                    Icons.sports_soccer,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
                                   label: const Text(
                                     "Book Now",
                                     style: TextStyle(fontWeight: FontWeight.w800),

@@ -63,7 +63,7 @@ class MyBookingsScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: (list.isEmpty) ? 1 : list.length + 1,
               itemBuilder: (_, i) {
-                // ✅ Header card
+                
                 if (i == 0) {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
@@ -173,7 +173,7 @@ class MyBookingsScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ✅ Date + time
+                         
                           Row(
                             children: [
                               Container(
@@ -209,7 +209,7 @@ class MyBookingsScreen extends ConsumerWidget {
 
                           const SizedBox(height: 10),
 
-                          // ✅ Status chips
+                       
                           Row(
                             children: [
                               _Chip(
@@ -223,7 +223,7 @@ class MyBookingsScreen extends ConsumerWidget {
                               ),
                               const Spacer(),
 
-                              // ✅ Cancel button
+                              
                               if (canCancel)
                                 InkWell(
                                   onTap: cancelState.isLoading

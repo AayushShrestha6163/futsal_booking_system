@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/core/api/api_endpoints.dart';
 import 'package:futal_booking_system/features/courts/presentation/providers/courts_details_provider.dart';
 import 'package:futal_booking_system/features/slots/presentation/pages/slots_page.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/providers/gyroscope_provider.dart';
 
 class CourtDetailsPage extends ConsumerWidget {
   final String courtId;
@@ -23,6 +24,10 @@ class CourtDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncCourt = ref.watch(courtDetailsProvider(courtId));
+    final gyro = ref.watch(gyroscopeProvider);
+
+    final tiltX = (gyro.y * 0.06).clamp(-0.10, 0.10);
+    final tiltY = (gyro.x * 0.06).clamp(-0.10, 0.10);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -42,71 +47,80 @@ class CourtDetailsPage extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             children: [
-              // ✅ Image Card with overlay
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      blurRadius: 18,
-                      offset: Offset(0, 10),
-                      color: Color(0x14000000),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: SizedBox(
-                    height: 220,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (imageUrl != null)
-                          Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+              Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001)
+                  ..rotateX(tiltX)
+                  ..rotateY(-tiltY),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 18,
+                        offset: Offset(0, 10),
+                        color: Color(0x14000000),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: SizedBox(
+                      height: 220,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (imageUrl != null)
+                            Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey.shade200,
+                                child: const Center(
+                                  child: Icon(Icons.image_not_supported),
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
                               color: Colors.grey.shade200,
-                              child: const Center(child: Icon(Icons.image_not_supported)),
+                              child: const Center(
+                                child: Icon(Icons.image, size: 44),
+                              ),
                             ),
-                          )
-                        else
-                          Container(
-                            color: Colors.grey.shade200,
-                            child: const Center(child: Icon(Icons.image, size: 44)),
-                          ),
-                        // overlay
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.45),
-                                ],
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.45),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          left: 14,
-                          right: 14,
-                          bottom: 14,
-                          child: Text(
-                            c.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
+                          Positioned(
+                            left: 14,
+                            right: 14,
+                            bottom: 14,
+                            child: Text(
+                              c.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -114,7 +128,6 @@ class CourtDetailsPage extends ConsumerWidget {
 
               const SizedBox(height: 14),
 
-              // ✅ Info Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -140,7 +153,10 @@ class CourtDetailsPage extends ConsumerWidget {
                             color: green.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.stadium_outlined, color: green),
+                          child: const Icon(
+                            Icons.stadium_outlined,
+                            color: green,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -155,28 +171,38 @@ class CourtDetailsPage extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 18, color: Colors.black54),
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 18,
+                          color: Colors.black54,
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             (c.location ?? "Unknown location").toString(),
-                            style: const TextStyle(color: Colors.black54, fontSize: 13.5),
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 10),
-
                     Row(
                       children: [
-                        const Icon(Icons.payments_outlined, size: 18, color: Colors.black54),
+                        const Icon(
+                          Icons.payments_outlined,
+                          size: 18,
+                          color: Colors.black54,
+                        ),
                         const SizedBox(width: 6),
                         Text(
-                          c.pricePerHour != null ? "Rs ${c.pricePerHour}/hr" : "Price not set",
+                          c.pricePerHour != null
+                              ? "Rs ${c.pricePerHour}/hr"
+                              : "Price not set",
                           style: const TextStyle(
                             color: green,
                             fontWeight: FontWeight.w900,
@@ -191,7 +217,6 @@ class CourtDetailsPage extends ConsumerWidget {
 
               const SizedBox(height: 14),
 
-              // ✅ Button Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -226,9 +251,23 @@ class CourtDetailsPage extends ConsumerWidget {
                     icon: const Icon(Icons.schedule, color: Colors.white),
                     label: const Text(
                       "Check Available Slots",
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Text(
+                "Gyroscope  X:${gyro.x.toStringAsFixed(2)}  Y:${gyro.y.toStringAsFixed(2)}  Z:${gyro.z.toStringAsFixed(2)}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.black45,
+                  fontSize: 11,
                 ),
               ),
             ],
