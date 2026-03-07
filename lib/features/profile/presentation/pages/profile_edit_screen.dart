@@ -28,6 +28,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final pp = session.getCurrentUserProfilePicture();
 
     if (!mounted) return;
+
     setState(() {
       username = name;
       profilePath = pp;
@@ -49,18 +50,28 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   ImageProvider? get profileImage {
     if (profilePath == null || profilePath!.trim().isEmpty) return null;
-    final url = "${ApiEndpoints.baseUrl}${profilePath!}";
-    return NetworkImage(url);
+
+    if (profilePath!.startsWith('/uploads')) {
+      return NetworkImage("${ApiEndpoints.baseUrl}${profilePath!}");
+    }
+
+    if (profilePath!.startsWith('http://') ||
+        profilePath!.startsWith('https://')) {
+      return NetworkImage(profilePath!);
+    }
+
+    return NetworkImage("${ApiEndpoints.baseUrl}${profilePath!}");
   }
 
   Future<void> _logout() async {
     final session = ref.read(userSessionServiceProvider);
 
-    // only clear current login session
-    // biometric info remains saved
+    // Clear only active login session
+    // Keep biometric data so fingerprint login can still work
     await session.clearLoginSession();
 
     if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -192,7 +203,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
