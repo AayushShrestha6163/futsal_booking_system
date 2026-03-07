@@ -13,8 +13,8 @@ class ProfileEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
-  String? username; 
-  String? profilePath; 
+  String? username;
+  String? profilePath;
 
   @override
   void initState() {
@@ -53,16 +53,28 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     return NetworkImage(url);
   }
 
+  Future<void> _logout() async {
+    final session = ref.read(userSessionServiceProvider);
+
+    // only clear current login session
+    // biometric info remains saved
+    await session.clearLoginSession();
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    
     const bg = Color(0xFF0B1220);
     const card = Color(0xFF121B2E);
-    const card2 = Color(0xFF0F172A);
     const border = Color(0x1AFFFFFF);
-
-    const primary = Color(0xFF16A34A); 
-    const secondary = Color(0xFF22C55E); 
+    const primary = Color(0xFF16A34A);
+    const secondary = Color(0xFF22C55E);
 
     return Scaffold(
       backgroundColor: bg,
@@ -91,8 +103,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFF16A34A), 
-                      Color(0xFF0EA5E9), 
+                      Color(0xFF16A34A),
+                      Color(0xFF0EA5E9),
                     ],
                   ),
                 ),
@@ -102,7 +114,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        
                         Stack(
                           alignment: Alignment.bottomRight,
                           children: [
@@ -147,10 +158,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                             ),
                           ],
                         ),
-
                         const SizedBox(width: 14),
-
-                        
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -190,7 +198,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
               child: Column(
                 children: [
-                  
                   Row(
                     children: [
                       Expanded(
@@ -203,13 +210,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                           onTap: _goToEditProfile,
                         ),
                       ),
-                      const SizedBox(width: 12),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
-                 
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -240,18 +243,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         size: 16,
                         color: Colors.white70,
                       ),
-                      onTap: () async {
-                        final session = ref.read(userSessionServiceProvider);
-                        await session.clearSession();
-
-                        if (!mounted) return;
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
-                        );
-                      },
+                      onTap: _logout,
                     ),
                   ),
                 ],
@@ -263,7 +255,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     );
   }
 }
-
 
 class _ActionCard extends StatelessWidget {
   final String title;
@@ -336,70 +327,6 @@ class _ActionCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ✅ Better tiles
-class _NiceTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color cardColor;
-  final Color borderColor;
-  final VoidCallback? onTap;
-
-  const _NiceTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.cardColor,
-    required this.borderColor,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor),
-          ),
-          child: ListTile(
-            leading: Container(
-              height: 42,
-              width: 42,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white),
-            ),
-            title: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            subtitle: Text(
-              subtitle,
-              style: const TextStyle(color: Colors.white70),
-            ),
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.white70,
-            ),
-          ),
         ),
       ),
     );

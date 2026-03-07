@@ -29,7 +29,10 @@ class AuthViewModel extends Notifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      errorMessage: null,
+    );
 
     final result = await _registerUsecase(
       RegisterParams(
@@ -48,7 +51,10 @@ class AuthViewModel extends Notifier<AuthState> {
         );
       },
       (_) {
-        state = state.copyWith(status: AuthStatus.registered);
+        state = state.copyWith(
+          status: AuthStatus.registered,
+          errorMessage: null,
+        );
       },
     );
   }
@@ -57,10 +63,16 @@ class AuthViewModel extends Notifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      errorMessage: null,
+    );
 
     final result = await _loginUsecase(
-      LoginParams(email: email, password: password),
+      LoginParams(
+        email: email,
+        password: password,
+      ),
     );
 
     await result.fold(
@@ -73,24 +85,49 @@ class AuthViewModel extends Notifier<AuthState> {
       (user) async {
         await _saveUserToSession(user);
 
+        final cleanEmail = (user.email ?? email).toString().trim();
+        if (cleanEmail.isNotEmpty) {
+          await ref.read(userSessionServiceProvider).saveBiometricLogin(
+                email: cleanEmail,
+              );
+        }
+
         state = state.copyWith(
           status: AuthStatus.authenticated,
           user: user,
+          errorMessage: null,
         );
       },
     );
   }
 
   Future<void> fingerprintLogin() async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(
+      status: AuthStatus.loading,
+      errorMessage: null,
+    );
 
-    final token = await ref.read(tokenServiceProvider).getToken();
-    final loggedIn = ref.read(userSessionServiceProvider).isLoggedIn();
+    final session = ref.read(userSessionServiceProvider);
+    final tokenService = ref.read(tokenServiceProvider);
 
-    if (token == null || token.isEmpty || !loggedIn) {
+    final token = await tokenService.getToken();
+    final biometricEnabled = session.isBiometricLoginEnabled();
+    final biometricEmail = session.getBiometricEmail();
+
+    if (!biometricEnabled ||
+        biometricEmail == null ||
+        biometricEmail.trim().isEmpty) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: "Login once with email/password first.",
+        errorMessage: "First login with email and password.",
+      );
+      return;
+    }
+
+    if (token == null || token.isEmpty) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: "Session expired. Please login with email and password.",
       );
       return;
     }
@@ -99,8 +136,8 @@ class AuthViewModel extends Notifier<AuthState> {
 
     await result.fold(
       (failure) async {
-        await ref.read(tokenServiceProvider).removeToken();
-        await ref.read(userSessionServiceProvider).clearSession();
+        await tokenService.removeToken();
+        await session.clearLoginSession();
 
         state = state.copyWith(
           status: AuthStatus.error,
@@ -113,6 +150,7 @@ class AuthViewModel extends Notifier<AuthState> {
         state = state.copyWith(
           status: AuthStatus.authenticated,
           user: user,
+          errorMessage: null,
         );
       },
     );
@@ -128,7 +166,7 @@ class AuthViewModel extends Notifier<AuthState> {
       userId: user.authId?.toString(),
       email: email,
       username: displayName,
-      profilePicture: user.profilePicture?.toString(),
+      profilePicture: null,
     );
   }
 

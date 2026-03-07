@@ -7,8 +7,6 @@ import 'package:futal_booking_system/features/auth/presentation/pages/forgot_pas
 import 'package:futal_booking_system/features/auth/presentation/state/auth_state.dart';
 import 'package:futal_booking_system/features/auth/presentation/view_models/auth_viewmodel.dart';
 import 'package:futal_booking_system/features/dashboard/presentation/pages/dashboard_screen.dart';
-import 'package:futal_booking_system/widget/my_button.dart';
-import 'package:futal_booking_system/widget/my_textformfield.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -44,7 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (formKey.currentState!.validate()) {
       await ref.read(authViewModelProvider.notifier).login(
             email: emailController.text.trim(),
-            password: passwordController.text,
+            password: passwordController.text.trim(),
           );
     }
   }
@@ -54,7 +52,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final available = await bio.isAvailable();
     if (!available) {
-      SnackbarUtils.showError(context, "Fingerprint not available on this device.");
+      if (!mounted) return;
+      SnackbarUtils.showError(
+        context,
+        "Fingerprint not available on this device.",
+      );
       return;
     }
 
@@ -67,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? validateEmail(String? val) {
     if (val == null || val.trim().isEmpty) return "Email cannot be empty";
     if (!val.contains("@") || !val.contains(".com")) {
-      return "Enter a valid email must be @gmail.com";
+      return "Enter a valid email";
     }
     return null;
   }
@@ -82,12 +84,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
         AppRoutes.pushReplacement(context, const DashboardScreen());
-      } else if (next.status == AuthStatus.error && next.errorMessage != null) {
+      } else if (next.status == AuthStatus.error &&
+          next.errorMessage != null &&
+          next.errorMessage!.isNotEmpty) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
     });
 
-    const green = Color(0xFF16A34A); // ✅ nice green
+    const green = Color(0xFF16A34A);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -101,7 +105,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   const SizedBox(height: 14),
 
-                
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
@@ -116,12 +119,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         CircleAvatar(
                           radius: 26,
                           backgroundColor: Color(0x33FFFFFF),
-                          child: Icon(Icons.sports_soccer, color: Colors.white, size: 26),
+                          child: Icon(
+                            Icons.sports_soccer,
+                            color: Colors.white,
+                            size: 26,
+                          ),
                         ),
                         SizedBox(width: 14),
                         Expanded(
@@ -153,7 +160,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 16),
 
-                  
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -189,18 +195,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: 18),
 
-                              const Text("Email Address", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              const Text(
+                                "Email Address",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               const SizedBox(height: 8),
-                              MyTextFormField(
-                                label: "example@gmail.com",
+
+                              TextFormField(
                                 controller: emailController,
                                 validator: validateEmail,
                                 keyboardType: TextInputType.emailAddress,
+                                decoration: InputDecoration(
+                                  labelText: "example@gmail.com",
+                                  filled: true,
+                                  fillColor: const Color(0xFFF3F5F9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
                               ),
 
                               const SizedBox(height: 16),
 
-                              const Text("Password", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              const Text(
+                                "Password",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               const SizedBox(height: 8),
 
                               TextFormField(
@@ -217,10 +244,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                      obscurePassword
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
                                       color: Colors.black54,
                                     ),
-                                    onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                                    onPressed: () {
+                                      setState(() {
+                                        obscurePassword = !obscurePassword;
+                                      });
+                                    },
                                   ),
                                 ),
                               ),
@@ -228,14 +261,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(height: 12),
 
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
                                       Checkbox(
                                         value: savePassword,
                                         activeColor: green,
-                                        onChanged: (val) => setState(() => savePassword = val ?? false),
+                                        onChanged: (val) {
+                                          setState(() {
+                                            savePassword = val ?? false;
+                                          });
+                                        },
                                       ),
                                       const Text("Remember me"),
                                     ],
@@ -244,12 +282,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     onPressed: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const ForgotPasswordPage(),
+                                        ),
                                       );
                                     },
                                     child: const Text(
                                       "Forgot password?",
-                                      style: TextStyle(color: green, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                        color: green,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -257,7 +301,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                               const SizedBox(height: 10),
 
-                              
                               SizedBox(
                                 width: double.infinity,
                                 height: 52,
@@ -271,26 +314,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                   child: const Text(
                                     "Login",
-                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
 
                               const SizedBox(height: 12),
 
-                          
                               SizedBox(
                                 width: double.infinity,
                                 height: 52,
                                 child: OutlinedButton.icon(
                                   onPressed: _handleFingerprintLogin,
-                                  icon: const Icon(Icons.fingerprint, color: green),
+                                  icon: const Icon(
+                                    Icons.fingerprint,
+                                    color: green,
+                                  ),
                                   label: const Text(
                                     "Login with Fingerprint",
-                                    style: TextStyle(color: green, fontWeight: FontWeight.w700),
+                                    style: TextStyle(
+                                      color: green,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFFB7E4C7)),
+                                    side: const BorderSide(
+                                      color: Color(0xFFB7E4C7),
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
