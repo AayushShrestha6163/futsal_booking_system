@@ -2,84 +2,111 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/features/auth/presentation/pages/login_screen.dart';
-import 'package:futal_booking_system/features/auth/presentation/pages/signup_screen.dart';
-
-Widget makeTestable(Widget child) {
-  return ProviderScope(child: MaterialApp(home: child));
-}
 
 void main() {
-  testWidgets('renders texts, fields and buttons', (tester) async {
-    await tester.pumpWidget(makeTestable(const LoginScreen()));
+  Widget createWidgetUnderTest() {
+    return const ProviderScope(
+      child: MaterialApp(
+        home: LoginScreen(),
+      ),
+    );
+  }
 
-    expect(find.text('Hello'), findsOneWidget);
-    expect(find.text('Login Account'), findsWidgets);
+  group('LoginScreen Widget Test', () {
+    testWidgets('should render login screen UI', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-    expect(find.text('Email Address :'), findsOneWidget);
-    expect(find.text('Password :'), findsOneWidget);
+      expect(find.text('Welcome Back'), findsOneWidget);
+      expect(find.text('Login to continue your booking'), findsOneWidget);
+      expect(find.text('Login Account'), findsOneWidget);
+      expect(find.text('Enter your email and password to login.'), findsOneWidget);
 
-    expect(find.text('Login Account'), findsWidgets);
-    expect(find.text('Create New Account'), findsOneWidget);
-  });
+      expect(find.text('Email Address'), findsOneWidget);
+      expect(find.text('Password'), findsOneWidget);
 
-  testWidgets('shows email validation error for invalid email', (tester) async {
-    await tester.pumpWidget(makeTestable(const LoginScreen()));
+      expect(find.byType(TextFormField), findsNWidgets(2));
 
-    final emailField = find.byType(TextFormField).first;
-
-    // Enter invalid email
-    await tester.enterText(emailField, 'invalid-email');
-
-    // Tap login button (use ElevatedButton to avoid ambiguity with header text)
-    final loginBtn = find.widgetWithText(ElevatedButton, 'Login Account');
-    await tester.tap(loginBtn);
-    await tester.pump();
-
-    expect(find.text('Enter a valid email must be @gmail.com'), findsOneWidget);
-  });
-
-  testWidgets('shows password validation error when empty', (tester) async {
-    await tester.pumpWidget(makeTestable(const LoginScreen()));
-
-    // Make sure email is valid so password validator triggers
-    final emailField = find.byType(TextFormField).first;
-    await tester.enterText(emailField, 'user@example.com');
-
-    final loginBtn = find.widgetWithText(ElevatedButton, 'Login Account');
-    await tester.tap(loginBtn);
-    await tester.pump();
-
-    expect(find.text('Password cannot be empty'), findsOneWidget);
-  });
-
-  testWidgets('toggles obscure password when suffix icon tapped', (
-    tester,
-  ) async {
-    await tester.pumpWidget(makeTestable(const LoginScreen()));
-
-    // Initially lock_outline should be present
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-
-    // Tap the icon to toggle
-    await tester.tap(find.byIcon(Icons.lock_outline));
-    await tester.pump();
-
-    expect(find.byIcon(Icons.lock_open), findsOneWidget);
-  });
-
-  testWidgets('navigates to SignupScreen when Create New Account tapped', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 2400));
-    addTearDown(() async {
-      await tester.binding.setSurfaceSize(null);
+      expect(find.text('Remember me'), findsOneWidget);
+      expect(find.text('Forgot password?'), findsOneWidget);
+      expect(find.text('Login'), findsOneWidget);
+      expect(find.text('Login with Fingerprint'), findsOneWidget);
+      expect(find.text('Create New Account'), findsOneWidget);
     });
 
-    await tester.pumpWidget(makeTestable(const LoginScreen()));
+    testWidgets('should show validation errors when fields are empty',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Create New Account'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Login'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SignupScreen), findsOneWidget);
+      expect(find.text('Email cannot be empty'), findsOneWidget);
+      expect(find.text('Password cannot be empty'), findsOneWidget);
+    });
+
+    testWidgets('should show invalid email error',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final emailField = find.byType(TextFormField).at(0);
+      final passwordField = find.byType(TextFormField).at(1);
+
+      await tester.enterText(emailField, 'invalidemail');
+      await tester.enterText(passwordField, 'password123');
+
+      await tester.tap(find.text('Login'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter a valid email'), findsOneWidget);
+    });
+
+    testWidgets('should accept valid email and password input',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final emailField = find.byType(TextFormField).at(0);
+      final passwordField = find.byType(TextFormField).at(1);
+
+      await tester.enterText(emailField, 'test@gmail.com');
+      await tester.enterText(passwordField, 'password123');
+
+      expect(find.text('test@gmail.com'), findsOneWidget);
+      expect(find.text('password123'), findsOneWidget);
+    });
+
+    testWidgets('should toggle password visibility',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.visibility));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+    });
+
+    testWidgets('should toggle remember me checkbox',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final checkboxFinder = find.byType(Checkbox);
+      expect(checkboxFinder, findsOneWidget);
+
+      Checkbox checkbox = tester.widget<Checkbox>(checkboxFinder);
+      expect(checkbox.value, false);
+
+      await tester.tap(checkboxFinder);
+      await tester.pumpAndSettle();
+
+      checkbox = tester.widget<Checkbox>(checkboxFinder);
+      expect(checkbox.value, true);
+    });
   });
 }

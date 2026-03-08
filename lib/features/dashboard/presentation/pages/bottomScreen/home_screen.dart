@@ -1,171 +1,371 @@
+import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'booking_screen.dart'; // make sure to import BookingScreen
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:futal_booking_system/core/api/api_endpoints.dart';
+import 'package:futal_booking_system/core/services/storage/user_session_service.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/pages/bottomScreen/booking_screen.dart';
+import 'package:futal_booking_system/features/payment/presentation/providers/booking_stats_provider.dart';
+import 'package:futal_booking_system/features/dashboard/presentation/providers/gyroscope_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  static const green = Color(0xFF16A34A);
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(userSessionServiceProvider);
+
+    final fullName = session.getCurrentUserUsername() ?? "User";
+    final profilePic = session.getCurrentUserProfilePicture();
+
+    final totalBookings = ref.watch(totalBookingsProvider);
+    final hoursPlayed = ref.watch(hoursPlayedProvider);
+    final gyro = ref.watch(gyroscopeProvider);
+
+    final tiltX = (gyro.y * 0.08).clamp(-0.12, 0.12);
+    final tiltY = (gyro.x * 0.08).clamp(-0.12, 0.12);
+
     return Scaffold(
-      backgroundColor: const Color(0xffe9f0ef),
+      backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundImage: AssetImage('assets/images/profile.jpg'),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Hey, Aayush Shrestha 👋',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+        child: RefreshIndicator(
+          color: green,
+          onRefresh: () async {
+            ref.invalidate(totalBookingsProvider);
+            ref.invalidate(hoursPlayedProvider);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: green.withOpacity(0.12),
+                      backgroundImage: _getProfileImage(profilePic),
+                      child: (profilePic == null || profilePic.isEmpty)
+                          ? const Icon(Icons.person, color: green)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Welcome back,",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            fullName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_none),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-            
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.location_on_outlined, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text(
-                      'Nepal, Kathmandu',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: const [
+                          BoxShadow(
+                            blurRadius: 18,
+                            offset: Offset(0, 10),
+                            color: Color(0x14000000),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.notifications_none),
+                      ),
                     ),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 14),
 
-              
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xff2ecc71), Color(0xff27ae60)],
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.sports_soccer,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Book Venues With The Best Offers!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: green,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 18,
+                        offset: Offset(0, 10),
+                        color: Color(0x22000000),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                    ],
+                  ),
+                  child: Row(
+                    children: const [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Color(0x33FFFFFF),
+                        child: Icon(Icons.location_on_outlined, color: Colors.white),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Your Location",
+                              style: TextStyle(
+                                color: Color(0xDFFFFFFF),
+                                fontSize: 12.5,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              "Nepal, Kathmandu",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      onPressed: () {
-                        // Navigate to BookingScreen
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BookScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text('Book Now'),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        title: "Total Bookings",
+                        value: totalBookings.toString(),
+                        icon: Icons.calendar_month,
+                        chipText: "Bookings",
+                        chipColor: green,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        title: "Hours Played",
+                        value: hoursPlayed,
+                        icon: Icons.access_time,
+                        chipText: "Hours",
+                        chipColor: const Color(0xFF2563EB),
+                      ),
                     ),
                   ],
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                children: const [
-                  _MenuItem(icon: Icons.calendar_month, title: 'My Calendar'),
-                  _MenuItem(icon: Icons.history, title: 'Event History'),
-                  _MenuItem(icon: Icons.flash_on, title: 'Quick Book'),
-                  _MenuItem(icon: Icons.place_outlined, title: 'Nearby Venues'),
-                  _MenuItem(
-                    icon: Icons.leaderboard_outlined,
-                    title: 'Leaderboard',
+                Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateX(tiltX)
+                    ..rotateY(-tiltY),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          blurRadius: 18,
+                          offset: Offset(0, 10),
+                          color: Color(0x22000000),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundColor: Color(0x33FFFFFF),
+                              child: Icon(
+                                Icons.sports_soccer,
+                                color: Colors.white,
+                                size: 26,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Book venues with the best offers!",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Choose a court, select a slot, and confirm your booking in seconds.",
+                          style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                        ),
+                        const SizedBox(height: 14),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: green,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const BookingScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Book Now",
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          "Gyroscope  X:${gyro.x.toStringAsFixed(2)}  Y:${gyro.y.toStringAsFixed(2)}  Z:${gyro.z.toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  _MenuItem(icon: Icons.more_horiz, title: 'Others'),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  ImageProvider? _getProfileImage(String? path) {
+    if (path == null || path.isEmpty) return null;
+
+    if (path.startsWith("/uploads")) {
+      return NetworkImage("${ApiEndpoints.baseUrl}$path");
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return NetworkImage(path);
+    }
+
+    return FileImage(File(path));
+  }
 }
 
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
+class _StatCard extends StatelessWidget {
   final String title;
+  final String value;
+  final IconData icon;
+  final String chipText;
+  final Color chipColor;
 
-  const _MenuItem({required this.icon, required this.title});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.chipText,
+    required this.chipColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 18,
+            offset: Offset(0, 10),
+            color: Color(0x14000000),
+          ),
+        ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.green),
-          const SizedBox(height: 8),
           Text(
             title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(color: Colors.black54, fontSize: 12.5),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(icon, size: 20, color: chipColor),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: chipColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  chipText,
+                  style: TextStyle(
+                    color: chipColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

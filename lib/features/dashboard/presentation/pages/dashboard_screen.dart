@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'bottomScreen/booking_screen.dart';
 
 import 'bottomScreen/home_screen.dart';
 import 'bottomScreen/profile_screen.dart';
-import 'bottomScreen/setting_screen.dart';
+import 'bottomScreen/mybookings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,15 +18,14 @@ class _BottomNavigationScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const BookScreen(),
+    const BookingScreen(),
     const ProfileScreen(),
-    const SettingScreen(),
+    const MyBookingsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: _screens[_selectedIndex],
 
       bottomNavigationBar: BottomNavigationBar(
@@ -40,10 +40,8 @@ class _BottomNavigationScreenState extends State<DashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: "Settings",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: "mybookings"),
+          
         ],
         backgroundColor: Color.fromARGB(255, 46, 226, 61),
         selectedItemColor: Colors.white,

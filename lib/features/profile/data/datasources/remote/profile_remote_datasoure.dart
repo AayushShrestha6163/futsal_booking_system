@@ -7,9 +7,7 @@ import 'package:futal_booking_system/core/services/storage/user_session_service.
 import 'package:futal_booking_system/features/profile/data/datasources/profile_datasource.dart';
 import 'package:futal_booking_system/features/profile/data/models/profile_model.dart';
 
-final profileRemoteDatasourceProvider = Provider<IProfileRemoteDatasource>((
-  ref,
-) {
+final profileRemoteDatasourceProvider = Provider<IProfileRemoteDatasource>((ref) {
   return ProfileRemoteDatasource(
     apiClient: ref.read(apiClientProvider),
     userSessionService: ref.read(userSessionServiceProvider),
@@ -21,48 +19,59 @@ class ProfileRemoteDatasource implements IProfileRemoteDatasource {
   final ApiClient _apiClient;
   final UserSessionService _userSessionService;
   final TokenService _tokenService;
+
   ProfileRemoteDatasource({
     required ApiClient apiClient,
     required UserSessionService userSessionService,
     required TokenService tokenService,
-  }) : _apiClient = apiClient,
-       _userSessionService = userSessionService,
-       _tokenService = tokenService;
+  })  : _apiClient = apiClient,
+        _userSessionService = userSessionService,
+        _tokenService = tokenService;
+
   @override
   Future<ProfileModel?> updatePersonalInfo(ProfileModel personalInfo) async {
-    final token = await _tokenService.getToken();
     final formData = FormData.fromMap({
-      ...personalInfo.toJson(),
+      "firstName": personalInfo.firstName,
+      "lastName": personalInfo.lastName,
       if (personalInfo.profile != null)
-        'profile': await MultipartFile.fromFile(
+        "profile": await MultipartFile.fromFile(
           personalInfo.profile!.path,
-          filename: 'profile.jpg',
+          filename: personalInfo.profile!.path.split('/').last,
         ),
     });
-    final response = await _apiClient.patch(
+
+    final response = await _apiClient.put(
       ApiEndpoints.updateProfile,
       data: formData,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: Options(contentType: "multipart/form-data"),
     );
 
-    if (response.data['success'] == true) {
+    if (response.data is Map && response.data['success'] == true) {
       final data = response.data['data'] as Map<String, dynamic>;
       final updatedUser = ProfileModel.fromJson(data);
-      await _userSessionService.saveUserSession(userId: updatedUser.userId);
+
+      await _userSessionService.saveUserSession(
+        userId: updatedUser.userId,
+        username:
+            "${updatedUser.firstName ?? ""} ${updatedUser.lastName ?? ""}".trim(),
+        profilePicture: updatedUser.profilePicture,
+      );
+
       return updatedUser;
     }
+
     return null;
   }
 
   @override
   Future<ProfileModel?> getUserById(String userId) async {
     final response = await _apiClient.get('${ApiEndpoints.getUser}/$userId');
-    if (response.data['success'] == true) {
+
+    if (response.data is Map && response.data['success'] == true) {
       final data = response.data['data'] as Map<String, dynamic>;
-      final user = ProfileModel.fromJson(data);
-      return user;
-    } else {
-      return null;
+      return ProfileModel.fromJson(data);
     }
+
+    return null;
   }
 }

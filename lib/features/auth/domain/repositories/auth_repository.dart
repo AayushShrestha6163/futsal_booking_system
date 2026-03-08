@@ -2,10 +2,15 @@ import 'package:dartz/dartz.dart';
 import 'package:futal_booking_system/core/error/failure.dart';
 import 'package:futal_booking_system/features/auth/domain/entities/auth_entity.dart';
 
-
 abstract interface class IAuthRepository {
   Future<Either<Failure, bool>> register(AuthEntity user);
   Future<Either<Failure, AuthEntity>> login(String email, String password);
-  Future<Either<Failure, AuthEntity>> getCurrentUser(String userId);
+
+  // ✅ Offline/local (Hive) by id
+  Future<Either<Failure, AuthEntity>> getUserById(String userId);
+
+  // ✅ Online/token based (for fingerprint)
+  Future<Either<Failure, AuthEntity>> getCurrentUser();
+
   Future<Either<Failure, bool>> logout();
 }
