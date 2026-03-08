@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:futal_booking_system/core/api/api_endpoints.dart';
@@ -60,14 +62,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       return NetworkImage(profilePath!);
     }
 
-    return NetworkImage("${ApiEndpoints.baseUrl}${profilePath!}");
+    return FileImage(File(profilePath!));
   }
 
   Future<void> _logout() async {
     final session = ref.read(userSessionServiceProvider);
 
-    // Clear only active login session
-    // Keep biometric data so fingerprint login can still work
     await session.clearLoginSession();
 
     if (!mounted) return;

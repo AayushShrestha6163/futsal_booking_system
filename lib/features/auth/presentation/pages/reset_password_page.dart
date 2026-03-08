@@ -25,12 +25,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   void initState() {
     super.initState();
 
-    final dio = Dio(BaseOptions(
-      baseUrl: ApiEndpoints.baseUrl,
-      connectTimeout: ApiEndpoints.connectionTimeout,
-      receiveTimeout: ApiEndpoints.receiveTimeout,
-      headers: {"Content-Type": "application/json"},
-    ));
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        connectTimeout: ApiEndpoints.connectionTimeout,
+        receiveTimeout: ApiEndpoints.receiveTimeout,
+        headers: {"Content-Type": "application/json"},
+      ),
+    );
 
     ds = PasswordResetRemoteDS(dio);
   }
@@ -43,15 +45,44 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.dispose();
   }
 
+  String getErrorMessage(Object e) {
+    if (e is DioException) {
+      final responseData = e.response?.data;
+
+      if (responseData is Map<String, dynamic>) {
+        return responseData["message"]?.toString() ??
+            e.message ??
+            "Something went wrong";
+      }
+
+      return e.message ?? "Something went wrong";
+    }
+    return e.toString();
+  }
+
   String? extractToken(String input) {
     final text = input.trim();
     if (text.isEmpty) return null;
 
     final uri = Uri.tryParse(text);
+
     if (uri != null) {
-      final t = uri.queryParameters["token"];
-      if (t != null && t.isNotEmpty) return t;
+      final queryToken =
+          uri.queryParameters["token"] ?? uri.queryParameters["resetToken"];
+
+      if (queryToken != null && queryToken.isNotEmpty) {
+        return queryToken;
+      }
+
+      final segments = uri.pathSegments;
+      if (segments.isNotEmpty) {
+        final last = segments.last.trim();
+        if (last.isNotEmpty) {
+          return last;
+        }
+      }
     }
+
     return text;
   }
 
@@ -66,12 +97,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
       return;
     }
+
     if (p1.isEmpty || p2.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Password is required")),
       );
       return;
     }
+
+    if (p1.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password must be at least 6 characters"),
+        ),
+      );
+      return;
+    }
+
     if (p1 != p2) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match")),
@@ -80,21 +122,27 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
 
     setState(() => loading = true);
+
     try {
       await ds.resetPassword(token: token, newPassword: p1);
 
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Password reset ✅ Now login")),
       );
-      Navigator.popUntil(context, (r) => r.isFirst);
+
+      Navigator.popUntil(context, (route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Reset failed: $e")),
+        SnackBar(content: Text(getErrorMessage(e))),
       );
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -119,8 +167,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 10),
-
-           
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
@@ -170,10 +216,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -216,9 +259,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           Text(
                             "New Password",
                             style: theme.textTheme.bodyMedium?.copyWith(
@@ -234,8 +275,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               hintText: "Enter new password",
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
-                                onPressed: () => setState(() => showP1 = !showP1),
-                                icon: Icon(showP1 ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () {
+                                  setState(() => showP1 = !showP1);
+                                },
+                                icon: Icon(
+                                  showP1
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
                               ),
                               filled: true,
                               fillColor: const Color(0xFFF3F5F9),
@@ -249,9 +296,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           Text(
                             "Confirm Password",
                             style: theme.textTheme.bodyMedium?.copyWith(
@@ -263,13 +308,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             controller: p2Ctrl,
                             obscureText: !showP2,
                             textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => loading ? null : _handleReset(),
+                            onSubmitted: (_) {
+                              if (!loading) {
+                                _handleReset();
+                              }
+                            },
                             decoration: InputDecoration(
                               hintText: "Re-enter new password",
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
-                                onPressed: () => setState(() => showP2 = !showP2),
-                                icon: Icon(showP2 ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () {
+                                  setState(() => showP2 = !showP2);
+                                },
+                                icon: Icon(
+                                  showP2
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
                               ),
                               filled: true,
                               fillColor: const Color(0xFFF3F5F9),
@@ -283,16 +338,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 18),
-
                           SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
                               onPressed: loading ? null : _handleReset,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 64, 168, 104),
+                                backgroundColor:
+                                    const Color.fromARGB(255, 64, 168, 104),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
@@ -315,18 +369,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                     ),
                             ),
                           ),
-
                           const SizedBox(height: 12),
-
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Icon(Icons.info_outline, size: 18, color: Colors.black45),
+                              Icon(
+                                Icons.info_outline,
+                                size: 18,
+                                color: Colors.black45,
+                              ),
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   "Tip: You can paste the full email link here. The app will automatically extract the token.",
-                                  style: TextStyle(color: Colors.black54, height: 1.3),
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                    height: 1.3,
+                                  ),
                                 ),
                               ),
                             ],
@@ -335,9 +394,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   TextButton.icon(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back),

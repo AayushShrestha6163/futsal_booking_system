@@ -160,13 +160,20 @@ class AuthViewModel extends Notifier<AuthState> {
     final session = ref.read(userSessionServiceProvider);
 
     final String email = (user.email ?? '').toString().trim();
-    final String displayName = _getDisplayNameFromEmail(email);
+    final String firstName = (user.firstName ?? '').toString().trim();
+    final String lastName = (user.lastName ?? '').toString().trim();
+    final String profilePicture = (user.profilePicture ?? '').toString().trim();
+
+    String displayName = '$firstName $lastName'.trim();
+    if (displayName.isEmpty) {
+      displayName = _getDisplayNameFromEmail(email);
+    }
 
     await session.saveUserSession(
       userId: user.authId?.toString(),
       email: email,
       username: displayName,
-      profilePicture: null,
+      profilePicture: profilePicture.isEmpty ? null : profilePicture,
     );
   }
 

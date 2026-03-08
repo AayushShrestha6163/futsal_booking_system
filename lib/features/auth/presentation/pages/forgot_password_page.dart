@@ -21,12 +21,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void initState() {
     super.initState();
 
-    final dio = Dio(BaseOptions(
-      baseUrl: ApiEndpoints.baseUrl,
-      connectTimeout: ApiEndpoints.connectionTimeout,
-      receiveTimeout: ApiEndpoints.receiveTimeout,
-      headers: {"Content-Type": "application/json"},
-    ));
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        connectTimeout: ApiEndpoints.connectionTimeout,
+        receiveTimeout: ApiEndpoints.receiveTimeout,
+        headers: {"Content-Type": "application/json"},
+      ),
+    );
 
     ds = PasswordResetRemoteDS(dio);
   }
@@ -37,8 +39,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
+  String getErrorMessage(Object e) {
+    if (e is DioException) {
+      final responseData = e.response?.data;
+
+      if (responseData is Map<String, dynamic>) {
+        return responseData["message"]?.toString() ??
+            e.message ??
+            "Something went wrong";
+      }
+
+      return e.message ?? "Something went wrong";
+    }
+    return e.toString();
+  }
+
   Future<void> _sendReset() async {
     final email = emailCtrl.text.trim();
+
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Email is required")),
@@ -46,11 +64,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return;
     }
 
+    if (!email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter a valid email")),
+      );
+      return;
+    }
+
     setState(() => loading = true);
+
     try {
       await ds.requestPasswordReset(email);
 
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Reset email sent ✅ Check your inbox")),
       );
@@ -61,11 +88,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       );
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed: $e")),
+        SnackBar(content: Text(getErrorMessage(e))),
       );
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -90,8 +120,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 10),
-
-                  
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
@@ -141,10 +169,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                 
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
@@ -169,12 +194,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-
                         TextField(
                           controller: emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => loading ? null : _sendReset(),
+                          onSubmitted: (_) {
+                            if (!loading) {
+                              _sendReset();
+                            }
+                          },
                           decoration: InputDecoration(
                             hintText: "example@gmail.com",
                             prefixIcon: const Icon(Icons.email_outlined),
@@ -190,16 +218,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
                             onPressed: loading ? null : _sendReset,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 64, 168, 104),
+                              backgroundColor:
+                                  const Color.fromARGB(255, 64, 168, 104),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -222,19 +249,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   ),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
-                        
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
-                            Icon(Icons.info_outline, size: 18, color: Colors.black45),
+                            Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: Colors.black45,
+                            ),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 "After you receive the email, copy the reset link (or token) and paste it on the next screen.",
-                                style: TextStyle(color: Colors.black54, height: 1.3),
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  height: 1.3,
+                                ),
                               ),
                             ),
                           ],
@@ -242,9 +273,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ],
                     ),
                   ),
-
                   const Spacer(),
-
                   TextButton.icon(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back),

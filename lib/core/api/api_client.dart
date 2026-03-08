@@ -10,7 +10,7 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(ref);
 });
-
+  
 class ApiClient {
   late final Dio _dio;
 

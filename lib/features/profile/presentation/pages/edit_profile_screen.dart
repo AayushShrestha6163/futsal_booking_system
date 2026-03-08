@@ -19,13 +19,12 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  // ✅ Theme Colors (change here)
   static const bg = Color(0xFFF6F7FB);
   static const card = Colors.white;
   static const border = Color(0x14000000);
 
-  static const accent = Color(0xFF16A34A); 
-  static const accent2 = Color(0xFF22C55E); 
+  static const accent = Color(0xFF16A34A);
+  static const accent2 = Color(0xFF22C55E);
 
   final _formKey = GlobalKey<FormState>();
 
@@ -43,7 +42,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final userSession = ref.read(userSessionServiceProvider);
     final userId = userSession.getCurrentUserId();
     if (userId != null) {
-      await ref.read(profileViewModelProvider.notifier).getProfileById(userId: userId);
+      await ref
+          .read(profileViewModelProvider.notifier)
+          .getProfileById(userId: userId);
     }
   }
 
@@ -68,6 +69,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final result = await permission.request();
       return result.isGranted;
     }
+
     if (status.isPermanentlyDenied) return false;
     return false;
   }
@@ -129,16 +131,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_profile.isNotEmpty) {
       return FileImage(File(_profile.first!.path));
     }
+
     if (_profilePicture != null && _profilePicture!.isNotEmpty) {
-      return NetworkImage('${ApiEndpoints.baseUrl}$_profilePicture');
+      if (_profilePicture!.startsWith('/uploads')) {
+        return NetworkImage('${ApiEndpoints.baseUrl}$_profilePicture');
+      }
+
+      if (_profilePicture!.startsWith('http://') ||
+          _profilePicture!.startsWith('https://')) {
+        return NetworkImage(_profilePicture!);
+      }
+
+      return FileImage(File(_profilePicture!));
     }
+
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<ProfileState>(profileViewModelProvider, (previous, next) {
-      if (next.status == ProfileStatus.loaded && !_isDataLoaded && next.user != null) {
+      if (next.status == ProfileStatus.loaded &&
+          !_isDataLoaded &&
+          next.user != null) {
         _isDataLoaded = true;
         _firstNameController.text = next.user!.firstName ?? '';
         _lastNameController.text = next.user!.lastName ?? '';
@@ -149,7 +164,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           context,
           MaterialPageRoute(builder: (_) => const ProfileEditScreen()),
         );
-      } else if (next.status == ProfileStatus.error && next.errorMessage != null) {
+      } else if (next.status == ProfileStatus.error &&
+          next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
     });
@@ -206,13 +222,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                   ),
                 ),
-
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
                     child: Column(
                       children: [
-                        
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(18),
@@ -238,7 +252,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     backgroundColor: const Color(0xFFEFF6FF),
                                     backgroundImage: _avatarImage(),
                                     child: _avatarImage() == null
-                                        ? const Icon(Icons.person, size: 52, color: Colors.black54)
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 52,
+                                            color: Colors.black54,
+                                          )
                                         : null,
                                   ),
                                   InkWell(
@@ -249,9 +267,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0x14000000)),
+                                        border: Border.all(
+                                          color: const Color(0x14000000),
+                                        ),
                                       ),
-                                      child: const Icon(Icons.camera_alt, size: 18),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 18,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -266,7 +289,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     label: const Text("Change Photo"),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: accent,
-                                      side: BorderSide(color: accent.withOpacity(0.35)),
+                                      side: BorderSide(
+                                        color: accent.withOpacity(0.35),
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(14),
                                       ),
@@ -280,7 +305,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                       label: const Text("Remove"),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: Colors.red,
-                                        side: BorderSide(color: Colors.red.withOpacity(0.35)),
+                                        side: BorderSide(
+                                          color: Colors.red.withOpacity(0.35),
+                                        ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(14),
                                         ),
@@ -291,10 +318,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 14),
-
-                       
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(18),
@@ -317,17 +341,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               children: [
                                 const Text(
                                   "Personal Info",
-                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 const SizedBox(height: 14),
-
                                 _niceField(
                                   label: "First Name",
                                   controller: _firstNameController,
                                   icon: Icons.person_outline,
                                   hint: "Enter first name",
                                   validator: (v) {
-                                    if (v == null || v.trim().isEmpty) return "First name is required";
+                                    if (v == null || v.trim().isEmpty) {
+                                      return "First name is required";
+                                    }
                                     return null;
                                   },
                                 ),
@@ -338,7 +366,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   icon: Icons.person_outline,
                                   hint: "Enter last name",
                                   validator: (v) {
-                                    if (v == null || v.trim().isEmpty) return "Last name is required";
+                                    if (v == null || v.trim().isEmpty) {
+                                      return "Last name is required";
+                                    }
                                     return null;
                                   },
                                 ),
@@ -346,10 +376,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -363,7 +390,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                             child: const Text(
                               "Save Changes",
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
@@ -375,14 +405,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.black87,
-                              side: const BorderSide(color: Color(0x26000000)),
+                              side: const BorderSide(
+                                color: Color(0x26000000),
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                             child: const Text(
                               "Cancel",
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ),
@@ -405,7 +440,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
@@ -415,7 +456,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             prefixIcon: Icon(icon, color: Colors.black54),
             filled: true,
             fillColor: const Color(0xFFF3F5F9),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
